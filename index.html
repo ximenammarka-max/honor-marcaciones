@@ -1,10 +1,511 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>Honor Marcaciones</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>HONOR · Marcación</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --navy:#1a1f3a;--navy2:#252b4a;--gold:#c9a84c;--white:#fff;
+  --cream:#f7f5f0;--gray:#8a8ea8;--gray-l:#e8e9f0;
+  --green:#219653;--red:#c0392b;--r:14px;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--navy);min-height:100dvh;display:flex;flex-direction:column;align-items:center}
+
+/* HEADER */
+.hdr{width:100%;padding:1.5rem 1.5rem .75rem;text-align:center}
+.hdr-logo{font-size:1.9rem;font-weight:700;letter-spacing:.15em;color:var(--white)}
+.hdr-line{width:36px;height:3px;background:var(--gold);margin:.6rem auto 0;border-radius:2px}
+.hdr-sub{font-size:.72rem;color:var(--gray);letter-spacing:.12em;text-transform:uppercase;margin-top:.4rem}
+
+/* CARD */
+.card{background:var(--white);border-radius:var(--r) var(--r) 0 0;width:100%;max-width:460px;flex:1;padding:1.5rem 1.25rem 2.5rem;display:flex;flex-direction:column;gap:1.1rem}
+
+/* DATE BADGE */
+.date-badge{background:var(--navy);border-radius:10px;padding:.75rem 1rem;display:flex;justify-content:space-between;align-items:center}
+.date-l .day{font-size:1.6rem;font-weight:700;color:var(--white);line-height:1}
+.date-l .dow{font-size:.72rem;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:.06em}
+.date-r .time{font-size:1.15rem;font-weight:700;color:var(--gold);text-align:right}
+.date-r .full{font-size:.75rem;color:var(--gray);text-align:right;margin-top:.1rem}
+
+/* LABELS */
+.lbl{font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gray);margin-bottom:.35rem}
+.req{color:var(--red)}
+
+/* TIPO */
+.tipo-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem}
+.tipo-btn{padding:.85rem;border:2px solid var(--gray-l);border-radius:10px;background:var(--cream);font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:600;color:var(--navy);cursor:pointer;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:.25rem}
+.tipo-btn .ico{font-size:1.5rem}
+.tipo-btn:active{transform:scale(.97)}
+.tipo-btn.sel-e{border-color:var(--green);background:#eaf6ee;color:var(--green)}
+.tipo-btn.sel-s{border-color:var(--red);background:#fdf0ee;color:var(--red)}
+.tipo-btn.sel-a{border-color:#f39c12;background:#fef9ee;color:#d68910}
+
+/* PERSON */
+.search-wrap{position:relative}
+.search-wrap input{width:100%;font-family:'DM Sans',sans-serif;font-size:.95rem;border:2px solid var(--gray-l);border-radius:10px;padding:.8rem 1rem .8rem 2.6rem;color:var(--navy);background:var(--cream)}
+.search-wrap input:focus{outline:none;border-color:var(--navy);background:var(--white)}
+.search-ico{position:absolute;left:.85rem;top:50%;transform:translateY(-50%);color:var(--gray)}
+.dropdown{background:var(--white);border:2px solid var(--gray-l);border-radius:10px;max-height:200px;overflow-y:auto;margin-top:.35rem;display:none;box-shadow:0 8px 20px rgba(26,31,58,.1)}
+.dropdown.open{display:block}
+.drop-item{padding:.75rem 1rem;cursor:pointer;border-bottom:1px solid var(--gray-l);display:flex;align-items:center;gap:.65rem}
+.drop-item:last-child{border:none}
+.drop-item:active{background:var(--cream)}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--navy);color:var(--white);font-size:.72rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.drop-name{font-size:.85rem;font-weight:500;color:var(--navy)}
+.drop-role{font-size:.7rem;color:var(--gray)}
+.sel-person{display:none;background:var(--navy);border-radius:10px;padding:.8rem 1rem;align-items:center;gap:.65rem}
+.sel-person.show{display:flex}
+.sel-person .avatar{background:var(--gold);color:var(--navy)}
+.sel-name{font-size:.9rem;font-weight:600;color:var(--white);flex:1}
+.sel-role{font-size:.7rem;color:var(--gray);margin-top:.1rem}
+.btn-change{background:rgba(255,255,255,.12);border:none;border-radius:6px;color:var(--white);font-size:.7rem;padding:.28rem .6rem;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif}
+
+/* PHOTO */
+.photo-zone{border:2.5px dashed var(--gray-l);border-radius:var(--r);min-height:180px;background:var(--cream);overflow:hidden;position:relative;cursor:pointer;transition:all .15s}
+.photo-zone.has-photo{border-style:solid;border-color:var(--navy)}
+.photo-zone:active{transform:scale(.99)}
+.photo-inner{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:180px;gap:.4rem}
+.photo-inner .ico{font-size:2.2rem}
+.photo-inner .lbl2{font-size:.88rem;font-weight:600;color:var(--navy)}
+.photo-inner .sub{font-size:.72rem;color:var(--gray);text-align:center;padding:0 1rem}
+.photo-zone img{width:100%;height:220px;object-fit:cover;display:block}
+.btn-retake{position:absolute;bottom:.65rem;right:.65rem;background:rgba(26,31,58,.75);color:var(--white);border:none;border-radius:7px;padding:.35rem .75rem;font-size:.72rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
+.photo-btns{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.4rem}
+.btn-ph{padding:.65rem;border:2px solid var(--gray-l);border-radius:9px;background:var(--cream);color:var(--navy);font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.35rem}
+.btn-ph:active{transform:scale(.97)}
+
+/* OBS */
+.obs-sel{width:100%;font-family:'DM Sans',sans-serif;font-size:.88rem;border:2px solid var(--gray-l);border-radius:10px;padding:.75rem 2.5rem .75rem 1rem;color:var(--navy);background:var(--cream) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238a8ea8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right .85rem center;-webkit-appearance:none;appearance:none;cursor:pointer}
+.obs-sel:focus{outline:none;border-color:var(--navy)}
+
+/* SUBMIT */
+.btn-submit{width:100%;background:var(--navy);color:var(--white);border:none;border-radius:var(--r);padding:1rem;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem;margin-top:auto;transition:all .15s}
+.btn-submit:active{transform:scale(.98)}
+.btn-submit:disabled{opacity:.5;cursor:not-allowed}
+
+/* SUCCESS */
+.success{display:none;flex-direction:column;align-items:center;text-align:center;padding:3rem 1.5rem;gap:1rem;flex:1}
+.success.show{display:flex}
+.success-ico{width:80px;height:80px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:2.2rem;animation:pop .4s cubic-bezier(.34,1.56,.64,1)}
+@keyframes pop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.success-title{font-size:1.3rem;font-weight:700;color:var(--white)}
+.success-name{font-size:1rem;color:var(--gold);font-weight:600}
+.success-detail{font-size:.82rem;color:var(--gray);line-height:1.6;white-space:pre-line}
+.btn-new{background:var(--gold);color:var(--navy);border:none;border-radius:var(--r);padding:.85rem 2rem;font-family:'DM Sans',sans-serif;font-size:.92rem;font-weight:700;cursor:pointer;margin-top:.5rem}
+
+/* SPINNER */
+.spin{width:16px;height:16px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ERROR BANNER */
+.err-banner{background:#fdf0ee;border:1.5px solid var(--red);border-radius:10px;padding:.75rem 1rem;font-size:.8rem;color:var(--red);display:none}
+.err-banner.show{display:block}
+</style>
 </head>
 <body>
-    <h1>Hola Xime 👋</h1>
-    <p>Tu proyecto ya está online 🚀</p>
+
+<div class="hdr">
+  <div class="hdr-logo">HONOR</div>
+  <div class="hdr-line"></div>
+  <div class="hdr-sub">Sistema de Marcaciones</div>
+</div>
+
+<!-- SUCCESS -->
+<div class="success" id="successScreen">
+  <div class="success-ico">✓</div>
+  <div class="success-title">¡Marcación enviada!</div>
+  <div class="success-name" id="sName"></div>
+  <div class="success-detail" id="sDetail"></div>
+  <button class="btn-new" onclick="reset()">Nueva marcación</button>
+</div>
+
+<!-- MAIN CARD -->
+<div class="card" id="mainCard">
+
+  <div class="err-banner" id="errBanner"></div>
+
+  <!-- Fecha/hora -->
+  <div class="date-badge">
+    <div class="date-l">
+      <div class="day" id="dDay">—</div>
+      <div class="dow" id="dDow">—</div>
+    </div>
+    <div class="date-r">
+      <div class="time" id="dTime">00:00</div>
+      <div class="full" id="dFull">—</div>
+    </div>
+  </div>
+
+  <!-- Tipo -->
+  <div>
+    <div class="lbl">Tipo de marcación <span class="req">*</span></div>
+    <div class="tipo-row">
+      <button class="tipo-btn" id="btnE" onclick="setTipo('ENTRADA')">
+        <span class="ico">🟢</span><span>Entrada</span>
+      </button>
+      <button class="tipo-btn" id="btnA" onclick="setTipo('ALMUERZO')">
+        <span class="ico">🟡</span><span>Almuerzo</span>
+      </button>
+      <button class="tipo-btn" id="btnS" onclick="setTipo('SALIDA')">
+        <span class="ico">🔴</span><span>Salida</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Promotor -->
+  <div>
+    <div class="lbl">¿Quién marcás? <span class="req">*</span></div>
+    <div class="sel-person" id="selPerson">
+      <div class="avatar" id="selAvatar"></div>
+      <div style="flex:1">
+        <div class="sel-name" id="selName"></div>
+        <div class="sel-role" id="selRole"></div>
+      </div>
+      <button class="btn-change" onclick="clearPerson()">Cambiar</button>
+    </div>
+    <div class="search-wrap" id="searchWrap">
+      <span class="search-ico">👤</span>
+      <input type="text" id="searchInput" placeholder="Buscá tu nombre..." oninput="filterList()" onfocus="openList()" autocomplete="off" />
+    </div>
+    <div class="dropdown" id="dropdown"></div>
+  </div>
+
+  <!-- Foto -->
+  <div>
+    <div class="lbl">Foto <span class="req">*</span></div>
+    <div class="photo-zone" id="photoZone">
+      <div class="photo-inner" onclick="triggerCam()">
+        <div class="ico">📷</div>
+        <div class="lbl2">Tomá tu foto</div>
+        <div class="sub">Tu cara debe verse claramente</div>
+      </div>
+    </div>
+    <input type="file" id="inputCam" accept="image/*" capture="user" style="display:none" onchange="handlePhoto(event)">
+  </div>
+
+  <!-- Obs -->
+  <div>
+    <div class="lbl">Observación (opcional)</div>
+    <select class="obs-sel" id="obsField">
+      <option value="">— Sin observación —</option>
+      <optgroup label="Llegadas tarde">
+        <option>Llegué tarde por tráfico</option>
+        <option>Llegué tarde por transporte público</option>
+        <option>Llegué tarde por motivo personal</option>
+      </optgroup>
+      <optgroup label="Ausencias">
+        <option>Falta por enfermedad</option>
+        <option>Falta por cita médica</option>
+        <option>Falta por motivo familiar</option>
+        <option>Falta justificada</option>
+      </optgroup>
+      <optgroup label="Salida anticipada">
+        <option>Salida anticipada por enfermedad</option>
+        <option>Salida anticipada por cita médica</option>
+        <option>Salida anticipada autorizada</option>
+      </optgroup>
+      <optgroup label="Trabajo en campo">
+        <option>Marcación desde punto de venta</option>
+        <option>Activación fuera del local</option>
+        <option>Trabajo en evento especial</option>
+        <option>Reunión de equipo</option>
+        <option>Capacitación</option>
+      </optgroup>
+      <optgroup label="Otros">
+        <option>Feriado trabajado</option>
+        <option>Hora extra autorizada</option>
+        <option>Sin novedad</option>
+      </optgroup>
+    </select>
+  </div>
+
+  <!-- Submit -->
+  <button class="btn-submit" id="submitBtn" onclick="submit()">
+    <span>✓</span><span>Confirmar marcación</span>
+  </button>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// CONFIG — solo cambiar esto si cambia el Worker
+// ══════════════════════════════════════════════
+const WORKER = 'https://honor-marcaciones.masmarkahonor.workers.dev';
+const KEY    = 'HONOR2026';
+
+// ══════════════════════════════════════════════
+// PROMOTORES
+// ══════════════════════════════════════════════
+const PERSONS = [
+  {id:'P001',name:'BRITEZ VAZQUEZ, MARCOS EMMANUEL',role:'PROMOTER JUNIOR',ci:'5309703'},
+  {id:'P002',name:'GONZALEZ ESQUIVEL, YUILEN SELENA',role:'PROMOTER JUNIOR',ci:'5195077'},
+  {id:'P003',name:'OZUNA MARTINEZ, SORAYA NAYARA',role:'PROMOTER JUNIOR',ci:'7251872'},
+  {id:'P004',name:'RUIZ DIAZ GUERRERO, ALVARO SEBASTIAN',role:'PROMOTER JUNIOR',ci:'7165754'},
+  {id:'P005',name:'FLORENTIN MELGAREJO, ALBA NATHALIA',role:'PROMOTER JUNIOR',ci:'5303479'},
+  {id:'P006',name:'ROJAS GAMARRA, AYELEN YAMILA',role:'PROMOTER JUNIOR',ci:'5690504'},
+  {id:'P007',name:'GABRIELA DUARTE ORTEGA',role:'PROMOTER JUNIOR',ci:'5795095'},
+  {id:'P008',name:'HECTOR LEONEL VAZQUEZ ROJAS',role:'PROMOTER JUNIOR',ci:'7055965'},
+  {id:'P009',name:'CABRERA SANTACRUZ, ALEXIS RAMON',role:'PROMOTER JUNIOR',ci:'5388298'},
+  {id:'P010',name:'TRINIDAD TRINIDAD, YUNIOR JOSE',role:'SUPERVISOR JUNIOR',ci:'7665871'},
+  {id:'P011',name:'OROA GAYOSO, SAID ALI',role:'PROMOTER JUNIOR',ci:'5174863'},
+  {id:'P012',name:'MELGAREJO DOMINGUEZ, DEBORA NOEMI',role:'PROMOTER JUNIOR',ci:'5766354'},
+  {id:'P013',name:'DIAZ VAZQUEZ, MATIAS ANTOLIN',role:'PROMOTER JUNIOR',ci:'5501287'},
+  {id:'P014',name:'CABRERA PEÑA, LIZI SOELI',role:'PROMOTER JUNIOR',ci:'6943961'},
+  {id:'P015',name:'ACOSTA PAIVA, KEVIN MIGUEL',role:'PROMOTER JUNIOR',ci:'5773630'},
+  {id:'P016',name:'DENIS ACOSTA, LUCAS ABEL',role:'PROMOTER JUNIOR',ci:'6783849'},
+  {id:'P017',name:'ROJAS BOGADO, JUAN JOSE MISSAC',role:'PROMOTER JUNIOR',ci:'4942426'},
+  {id:'P018',name:'CARABAJAL ORTIZ, RUTH ELISABETH',role:'PROMOTER JUNIOR',ci:'6015304'},
+  {id:'P019',name:'MELGAREJO, SEBASTIAN',role:'PROMOTER JUNIOR',ci:'5413456'},
+  {id:'P020',name:'DALLAS FONTANA, RUTH ARACELY',role:'PROMOTER JUNIOR',ci:'5532811'},
+  {id:'P021',name:'ZORRILLA PATIÑO, JORGE DANIEL',role:'PROMOTER JUNIOR',ci:'5471096'},
+];
+
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+let person = null, photo = null, tipo = null, today = '';
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+function init() {
+  tick();
+  setInterval(tick, 1000);
+  renderList(PERSONS);
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#searchWrap') && !e.target.closest('#dropdown'))
+      document.getElementById('dropdown').classList.remove('open');
+  });
+}
+
+function tick() {
+  const n = new Date();
+  const DAYS = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const MONS = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','setiembre','octubre','noviembre','diciembre'];
+  today = n.toISOString().slice(0,10);
+  document.getElementById('dDay').textContent  = n.getDate();
+  document.getElementById('dDow').textContent  = DAYS[n.getDay()];
+  document.getElementById('dTime').textContent = pad(n.getHours())+':'+pad(n.getMinutes());
+  document.getElementById('dFull').textContent = `${n.getDate()} de ${MONS[n.getMonth()]} ${n.getFullYear()}`;
+}
+const pad = n => String(n).padStart(2,'0');
+
+// ══════════════════════════════════════════════
+// TIPO
+// ══════════════════════════════════════════════
+function setTipo(t) {
+  tipo = t;
+  document.getElementById('btnE').className = 'tipo-btn' + (t==='ENTRADA' ?' sel-e':'');
+  document.getElementById('btnA').className = 'tipo-btn' + (t==='ALMUERZO'?' sel-a':'');
+  document.getElementById('btnS').className = 'tipo-btn' + (t==='SALIDA'  ?' sel-s':'');
+}
+
+// ══════════════════════════════════════════════
+// PERSON
+// ══════════════════════════════════════════════
+function initials(n) { return n.replace(/,/g,' ').split(/\s+/).filter(Boolean).slice(0,2).map(p=>p[0]).join('').toUpperCase(); }
+
+function renderList(list) {
+  const dd = document.getElementById('dropdown');
+  dd.innerHTML = list.length
+    ? list.map(p => `<div class="drop-item" onclick="selectPerson('${p.id}')">
+        <div class="avatar">${initials(p.name)}</div>
+        <div><div class="drop-name">${p.name}</div><div class="drop-role">${p.role}</div></div>
+      </div>`).join('')
+    : '<div style="padding:1rem;text-align:center;color:var(--gray);font-size:.85rem">Sin resultados</div>';
+}
+
+function filterList() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  renderList(PERSONS.filter(p => p.name.toLowerCase().includes(q)));
+  document.getElementById('dropdown').classList.add('open');
+}
+
+function openList() {
+  renderList(PERSONS);
+  document.getElementById('dropdown').classList.add('open');
+}
+
+function selectPerson(id) {
+  person = PERSONS.find(p => p.id === id);
+  document.getElementById('dropdown').classList.remove('open');
+  document.getElementById('searchInput').value = '';
+  document.getElementById('searchWrap').style.display = 'none';
+  document.getElementById('selAvatar').textContent = initials(person.name);
+  document.getElementById('selName').textContent = person.name;
+  document.getElementById('selRole').textContent = person.role;
+  document.getElementById('selPerson').classList.add('show');
+}
+
+function clearPerson() {
+  person = null;
+  document.getElementById('selPerson').classList.remove('show');
+  document.getElementById('searchWrap').style.display = 'block';
+}
+
+// ══════════════════════════════════════════════
+// PHOTO
+// ══════════════════════════════════════════════
+function triggerCam() { document.getElementById('inputCam').click(); }
+function handlePhoto(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      // Resize a 500px max
+      const MAX = 500;
+      let w = img.width, h = img.height;
+      if (w > MAX || h > MAX) {
+        if (w > h) { h = Math.round(h*MAX/w); w = MAX; }
+        else { w = Math.round(w*MAX/h); h = MAX; }
+      }
+      const cv = document.createElement('canvas');
+      cv.width = w; cv.height = h;
+      const ctx = cv.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      watermark(ctx, w, h);
+      photo = cv.toDataURL('image/jpeg', 0.65);
+      showPhoto(photo);
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+}
+
+function watermark(ctx, w, h) {
+  const barH = Math.round(h * 0.13);
+  ctx.fillStyle = 'rgba(26,31,58,0.75)';
+  ctx.fillRect(0, h-barH, w, barH);
+  const now = new Date();
+  const time = pad(now.getHours())+':'+pad(now.getMinutes());
+  const date = `${pad(now.getDate())}/${pad(now.getMonth()+1)}/${now.getFullYear()}`;
+  const pname = person ? person.name.split(',')[0].toUpperCase() : '';
+  const fs = Math.round(h*0.037);
+  ctx.textAlign = 'left';
+  ctx.font = `700 ${fs}px Arial`;
+  ctx.fillStyle = '#c9a84c';
+  ctx.fillText('HONOR', w*0.03, h-barH+barH*0.42);
+  ctx.font = `500 ${Math.round(fs*0.85)}px Arial`;
+  ctx.fillStyle = '#fff';
+  ctx.fillText(pname, w*0.03, h-barH+barH*0.8);
+  ctx.textAlign = 'right';
+  ctx.font = `700 ${fs}px Arial`;
+  ctx.fillStyle = '#fff';
+  ctx.fillText(time, w*0.97, h-barH+barH*0.42);
+  ctx.font = `400 ${Math.round(fs*0.78)}px Arial`;
+  ctx.fillStyle = 'rgba(255,255,255,0.75)';
+  ctx.fillText(date, w*0.97, h-barH+barH*0.8);
+  if (tipo) {
+    ctx.textAlign = 'center';
+    ctx.font = `700 ${Math.round(fs*0.82)}px Arial`;
+    ctx.fillStyle = tipo==='ENTRADA' ? '#2ecc71' : tipo==='ALMUERZO' ? '#f39c12' : '#e74c3c';
+    ctx.fillText('● '+tipo, w/2, h-barH+barH*0.6);
+  }
+}
+
+function showPhoto(src) {
+  const z = document.getElementById('photoZone');
+  z.innerHTML = `<img src="${src}"><button class="btn-retake" onclick="clearPhoto()">✕ Cambiar</button>`;
+  z.classList.add('has-photo');
+}
+
+function clearPhoto() {
+  photo = null;
+  const z = document.getElementById('photoZone');
+  z.classList.remove('has-photo');
+  z.innerHTML = `<div class="photo-inner" onclick="triggerCam()">
+    <div class="ico">📷</div>
+    <div class="lbl2">Tomá tu foto</div>
+    <div class="sub">Tu cara debe verse claramente</div>
+  </div>`;
+}
+
+// ══════════════════════════════════════════════
+// SUBMIT
+// ══════════════════════════════════════════════
+async function submit() {
+  if (!tipo)   return showErr('Seleccioná si es Entrada o Salida');
+  if (!person) return showErr('Seleccioná tu nombre');
+  if (!photo)  return showErr('Tomá tu foto');
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  showErr('');
+
+  const hora = pad(new Date().getHours())+':'+pad(new Date().getMinutes());
+  const obs  = document.getElementById('obsField').value;
+
+  btn.innerHTML = '<span class="spin"></span><span>Enviando...</span>';
+
+  try {
+    const res = await fetch(WORKER, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        key: KEY,
+        personId: person.id,
+        nombre:   person.name,
+        ci:       person.ci,
+        cargo:    person.role,
+        fecha:    today,
+        estado:   'PRESENTE',
+        tipo,
+        observacion: obs,
+        foto:     photo,
+        hora,
+        fuente:   'PROMOTOR'
+      })
+    });
+
+    const data = await res.json();
+
+    if (!data.ok) throw new Error(data.error || 'Error del servidor');
+
+    // Éxito
+    document.getElementById('mainCard').style.display = 'none';
+    document.getElementById('successScreen').classList.add('show');
+    document.getElementById('sName').textContent = person.name.split(',')[0];
+    const [y,m,d] = today.split('-');
+    document.getElementById('sDetail').textContent =
+      `${tipo==='ENTRADA'?'🟢 Entrada':'🔴 Salida'} registrada el ${d}/${m}/${y} a las ${hora}.`+
+      (obs ? `\nObs: ${obs}` : '')+
+      '\n\nTu supervisora ya puede verla.';
+
+  } catch(err) {
+    btn.disabled = false;
+    btn.innerHTML = '<span>✓</span><span>Confirmar marcación</span>';
+    showErr('Error al enviar: ' + err.message + '. Verificá tu conexión.');
+  }
+}
+
+function showErr(msg) {
+  const b = document.getElementById('errBanner');
+  b.textContent = msg;
+  b.classList.toggle('show', !!msg);
+}
+
+function reset() {
+  person = null; photo = null; tipo = null;
+  document.getElementById('successScreen').classList.remove('show');
+  document.getElementById('mainCard').style.display = 'flex';
+  document.getElementById('selPerson').classList.remove('show');
+  document.getElementById('searchWrap').style.display = 'block';
+  document.getElementById('btnE').className = 'tipo-btn';
+  document.getElementById('btnS').className = 'tipo-btn';
+  document.getElementById('obsField').value = '';
+  document.getElementById('submitBtn').disabled = false;
+  document.getElementById('submitBtn').innerHTML = '<span>✓</span><span>Confirmar marcación</span>';
+  clearPhoto();
+  showErr('');
+}
+
+init();
+</script>
 </body>
 </html>
