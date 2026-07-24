@@ -186,41 +186,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);min-height:100dvh;d
     <input type="file" id="inputCam" accept="image/*" capture="user" style="display:none" onchange="handlePhoto(event)">
   </div>
 
-  <!-- Obs -->
-  <div>
-    <div class="lbl">Observación (opcional)</div>
-    <select class="obs-sel" id="obsField">
-      <option value="">— Sin observación —</option>
-      <optgroup label="Llegadas tarde">
-        <option>Llegué tarde por tráfico</option>
-        <option>Llegué tarde por transporte público</option>
-        <option>Llegué tarde por motivo personal</option>
-      </optgroup>
-      <optgroup label="Ausencias">
-        <option>Falta por enfermedad</option>
-        <option>Falta por cita médica</option>
-        <option>Falta por motivo familiar</option>
-        <option>Falta justificada</option>
-      </optgroup>
-      <optgroup label="Salida anticipada">
-        <option>Salida anticipada por enfermedad</option>
-        <option>Salida anticipada por cita médica</option>
-        <option>Salida anticipada autorizada</option>
-      </optgroup>
-      <optgroup label="Trabajo en campo">
-        <option>Marcación desde punto de venta</option>
-        <option>Activación fuera del local</option>
-        <option>Trabajo en evento especial</option>
-        <option>Reunión de equipo</option>
-        <option>Capacitación</option>
-      </optgroup>
-      <optgroup label="Otros">
-        <option>Feriado trabajado</option>
-        <option>Hora extra autorizada</option>
-        <option>Sin novedad</option>
-      </optgroup>
-    </select>
-  </div>
+
+  <!-- Submit -->
 
   <!-- Submit -->
   <button class="btn-submit" id="submitBtn" onclick="submit()">
@@ -240,27 +207,20 @@ const KEY    = 'HONOR2026';
 // PROMOTORES
 // ══════════════════════════════════════════════
 const PERSONS = [
-  {id:'P001',name:'BRITEZ VAZQUEZ, MARCOS EMMANUEL',role:'PROMOTER JUNIOR',ci:'5309703'},
-  {id:'P002',name:'GONZALEZ ESQUIVEL, YUILEN SELENA',role:'PROMOTER JUNIOR',ci:'5195077'},
-  {id:'P003',name:'OZUNA MARTINEZ, SORAYA NAYARA',role:'PROMOTER JUNIOR',ci:'7251872'},
-  {id:'P004',name:'RUIZ DIAZ GUERRERO, ALVARO SEBASTIAN',role:'PROMOTER JUNIOR',ci:'7165754'},
-  {id:'P005',name:'FLORENTIN MELGAREJO, ALBA NATHALIA',role:'PROMOTER JUNIOR',ci:'5303479'},
-  {id:'P006',name:'ROJAS GAMARRA, AYELEN YAMILA',role:'PROMOTER JUNIOR',ci:'5690504'},
-  {id:'P007',name:'GABRIELA DUARTE ORTEGA',role:'PROMOTER JUNIOR',ci:'5795095'},
-  {id:'P008',name:'HECTOR LEONEL VAZQUEZ ROJAS',role:'PROMOTER JUNIOR',ci:'7055965'},
+  {id:'P001',name:'ALARCON BENITEZ, NICOLAS MARIA',role:'ARCHITECT',ci:'5002579'},
+  {id:'P002',name:'BENITEZ QUEVEDO, SOFIA CORAL',role:'TRAINEE BACK OFFICE',ci:'6504437'},
+  {id:'P003',name:'CRISTHIAN OLIVEIRA MACHADO',role:'TRAINER JUNIOR',ci:'4205540'},
+  {id:'P004',name:'FARIAS MEZA, GABRIELA BEATRIZ',role:'TRAINER SENIOR',ci:'5856162'},
+  {id:'P005',name:'FERNANDEZ VERA, BIANCA MARIA JOSE',role:'ASISTENTE DE MARKETING',ci:'6559122'},
+  {id:'P006',name:'GODOY PERALTA, EMILIO EMMANUEL',role:'DESIGNER',ci:'4549551'},
+  {id:'P007',name:'MEZA VILLALBA, MARIO EDUARDO',role:'SUPERVISOR SENIOR',ci:'3990722'},
+  {id:'P008',name:'ORUE PEREIRA, CAMILO ADRIAN',role:'DISPLAY COORDINATOR',ci:'4552656'},
   {id:'P009',name:'CABRERA SANTACRUZ, ALEXIS RAMON',role:'PROMOTER JUNIOR',ci:'5388298'},
-  {id:'P010',name:'TRINIDAD TRINIDAD, YUNIOR JOSE',role:'SUPERVISOR JUNIOR',ci:'7665871'},
-  {id:'P011',name:'OROA GAYOSO, SAID ALI',role:'PROMOTER JUNIOR',ci:'5174863'},
-  {id:'P012',name:'MELGAREJO DOMINGUEZ, DEBORA NOEMI',role:'PROMOTER JUNIOR',ci:'5766354'},
-  {id:'P013',name:'DIAZ VAZQUEZ, MATIAS ANTOLIN',role:'PROMOTER JUNIOR',ci:'5501287'},
-  {id:'P014',name:'CABRERA PEÑA, LIZI SOELI',role:'PROMOTER JUNIOR',ci:'6943961'},
-  {id:'P015',name:'ACOSTA PAIVA, KEVIN MIGUEL',role:'PROMOTER JUNIOR',ci:'5773630'},
-  {id:'P016',name:'DENIS ACOSTA, LUCAS ABEL',role:'PROMOTER JUNIOR',ci:'6783849'},
-  {id:'P017',name:'ROJAS BOGADO, JUAN JOSE MISSAC',role:'PROMOTER JUNIOR',ci:'4942426'},
-  {id:'P018',name:'CARABAJAL ORTIZ, RUTH ELISABETH',role:'PROMOTER JUNIOR',ci:'6015304'},
-  {id:'P019',name:'MELGAREJO, SEBASTIAN',role:'PROMOTER JUNIOR',ci:'5413456'},
-  {id:'P020',name:'DALLAS FONTANA, RUTH ARACELY',role:'PROMOTER JUNIOR',ci:'5532811'},
-  {id:'P021',name:'ZORRILLA PATIÑO, JORGE DANIEL',role:'PROMOTER JUNIOR',ci:'5471096'},
+  {id:'P010',name:'ROMAN RAMIREZ, FRANCO',role:'B2B JUNIOR',ci:'7213500'},
+  {id:'P011',name:'ROMAN SANCHEZ, IVANNA AYELEN',role:'JR CITY MANAGER',ci:'5700255'},
+  {id:'P012',name:'MAYOR OVELAR, SEBASTIAN JESUS',role:'BO SERV Y HOMOL',ci:'5278717'},
+  {id:'P013',name:'DIEGO DAMIAN VERA ARCE',role:'COMMUNITY ASSISTANT',ci:'4460542'},
+  {id:'P014',name:'LEONARDO GABRIEL DOLDAN VALDEZ',role:'BUSINESS INTELLIGENCE',ci:'5031698'},
 ];
 
 // ══════════════════════════════════════════════
@@ -439,7 +399,6 @@ async function submit() {
   showErr('');
 
   const hora = pad(new Date().getHours())+':'+pad(new Date().getMinutes());
-  const obs  = document.getElementById('obsField').value;
 
   btn.innerHTML = '<span class="spin"></span><span>Enviando...</span>';
 
@@ -456,7 +415,7 @@ async function submit() {
         fecha:    today,
         estado:   'PRESENTE',
         tipo,
-        observacion: obs,
+        observacion: '',
         foto:     photo,
         hora,
         fuente:   'PROMOTOR'
