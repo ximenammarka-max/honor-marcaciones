@@ -1373,29 +1373,58 @@
 // ═══════════════════════════════════════════════
 // DATOS INICIALES
 // ═══════════════════════════════════════════════
+// Los id de aca abajo tienen que coincidir con los de index.html (la app
+// que de verdad envia las marcaciones) y con el panel de administracion --
+// son las mismas 17 personas del panel, en el mismo orden/id. Las 10 que
+// solo estaban en esta lista (no marcan via index.html ni existen en el
+// panel todavia) se movieron a ids nuevos (P018+) para que no choquen.
 const INITIAL_PERSONS = [
-  {id:'P001', name:'BRITEZ VAZQUEZ, MARCOS EMMANUEL', role:'PROMOTER JUNIOR', ci:'5309703'},
-  {id:'P002', name:'GONZALEZ ESQUIVEL, YUILEN SELENA', role:'PROMOTER JUNIOR', ci:'5195077'},
-  {id:'P003', name:'OZUNA MARTINEZ, SORAYA NAYARA', role:'PROMOTER JUNIOR', ci:'7251872'},
-  {id:'P004', name:'RUIZ DIAZ GUERRERO, ALVARO SEBASTIAN', role:'PROMOTER JUNIOR', ci:'7165754'},
-  {id:'P005', name:'FLORENTIN MELGAREJO, ALBA NATHALIA', role:'PROMOTER JUNIOR', ci:'5303479'},
-  {id:'P006', name:'ROJAS GAMARRA, AYELEN YAMILA', role:'PROMOTER JUNIOR', ci:'5690504'},
-  {id:'P007', name:'GABRIELA DUARTE ORTEGA', role:'PROMOTER JUNIOR', ci:'5795095'},
-  {id:'P008', name:'HECTOR LEONEL VAZQUEZ ROJAS', role:'PROMOTER JUNIOR', ci:'7055965'},
-  {id:'P009', name:'CABRERA SANTACRUZ, ALEXIS RAMON', role:'PROMOTER JUNIOR', ci:'5388298'},
-  {id:'P010', name:'TRINIDAD TRINIDAD, YUNIOR JOSE', role:'SUPERVISOR JUNIOR', ci:'7665871'},
-  {id:'P011', name:'OROA GAYOSO, SAID ALI', role:'PROMOTER JUNIOR', ci:'5174863'},
-  {id:'P012', name:'MELGAREJO DOMINGUEZ, DEBORA NOEMI', role:'PROMOTER JUNIOR', ci:'5766354'},
-  {id:'P013', name:'DIAZ VAZQUEZ, MATIAS ANTOLIN', role:'PROMOTER JUNIOR', ci:'5501287'},
-  {id:'P014', name:'CABRERA PEÑA, LIZI SOELI', role:'PROMOTER JUNIOR', ci:'6943961'},
-  {id:'P015', name:'ACOSTA PAIVA, KEVIN MIGUEL', role:'PROMOTER JUNIOR', ci:'5773630'},
-  {id:'P016', name:'DENIS ACOSTA, LUCAS ABEL', role:'PROMOTER JUNIOR', ci:'6783849'},
-  {id:'P017', name:'ROJAS BOGADO, JUAN JOSE MISSAC', role:'PROMOTER JUNIOR', ci:'4942426'},
-  {id:'P018', name:'CARABAJAL ORTIZ, RUTH ELISABETH', role:'PROMOTER JUNIOR', ci:'6015304'},
-  {id:'P019', name:'MELGAREJO, SEBASTIAN', role:'PROMOTER JUNIOR', ci:'5413456'},
-  {id:'P020', name:'DALLAS FONTANA, RUTH ARACELY', role:'PROMOTER JUNIOR', ci:'5532811'},
-  {id:'P021', name:'ZORRILLA PATIÑO, JORGE DANIEL', role:'PROMOTER JUNIOR', ci:'5471096'},
+  {id:'P001', name:'CARABAJAL ORTIZ, RUTH ELISABETH', role:'PROMOTER JUNIOR', ci:'6015304'},
+  {id:'P002', name:'DALLAS FONTANA ESTIGARRIBIA, RUTH ARACELY', role:'PROMOTER JUNIOR', ci:'5532811'},
+  {id:'P003', name:'IRENE PAOLA ESCOBAR TOLEDO', role:'MERCHANDISER', ci:''},
+  {id:'P004', name:'ROMAN LEZCANO, JESUS EDUARDO', role:'PROMOTER JUNIOR', ci:''},
+  {id:'P005', name:'ACOSTA PAIVA, KEVIN MIGUEL', role:'MERCHANDISER', ci:'5773630'},
+  {id:'P006', name:'BRITEZ VAZQUEZ, MARCOS EMMANUEL', role:'PROMOTER JUNIOR', ci:'5309703'},
+  {id:'P007', name:'CABRERA PEÑA, LIZI SOELI', role:'PROMOTER JUNIOR', ci:'6943961'},
+  {id:'P008', name:'CABRERA SANTACRUZ, ALEXIS RAMON', role:'PROMOTER JUNIOR', ci:'5388298'},
+  {id:'P009', name:'MELGAREJO DOMINGUEZ, DEBORA NOEMI', role:'PROMOTER JUNIOR', ci:'5766354'},
+  {id:'P010', name:'OZUNA MARTINEZ, SORAYA NAYARA', role:'PROMOTER SENIOR', ci:'7251872'},
+  {id:'P011', name:'ROJAS BOGADO, JUAN JOSE MISSAC', role:'MERCHANDISER', ci:'4942426'},
+  {id:'P012', name:'ROJAS GAMARRA, AYELEN YAMILA', role:'PROMOTER SENIOR', ci:'5690504'},
+  {id:'P013', name:'RUIZ DIAZ GUERRERO, ALVARO SEBASTIAN', role:'PROMOTER SENIOR', ci:'7165754'},
+  {id:'P014', name:'JUSTIN SEBASTIAN GARAY VERGARA', role:'PROMOTER JUNIOR', ci:''},
+  {id:'P015', name:'QUINTANA VEGA, IHARA BELEN', role:'PROMOTER JUNIOR', ci:''},
+  {id:'P016', name:'ARNALDO DE JESUS NOGUERA NUÑEZ', role:'MERCHANDISER', ci:''},
+  {id:'P017', name:'XIMENA MOLAS', role:'MERCHANDISER', ci:''},
+  {id:'P018', name:'GONZALEZ ESQUIVEL, YUILEN SELENA', role:'PROMOTER JUNIOR', ci:'5195077'},
+  {id:'P019', name:'FLORENTIN MELGAREJO, ALBA NATHALIA', role:'PROMOTER JUNIOR', ci:'5303479'},
+  {id:'P020', name:'GABRIELA DUARTE ORTEGA', role:'PROMOTER JUNIOR', ci:'5795095'},
+  {id:'P021', name:'HECTOR LEONEL VAZQUEZ ROJAS', role:'PROMOTER JUNIOR', ci:'7055965'},
+  {id:'P022', name:'TRINIDAD TRINIDAD, YUNIOR JOSE', role:'SUPERVISOR JUNIOR', ci:'7665871'},
+  {id:'P023', name:'OROA GAYOSO, SAID ALI', role:'PROMOTER JUNIOR', ci:'5174863'},
+  {id:'P024', name:'DIAZ VAZQUEZ, MATIAS ANTOLIN', role:'PROMOTER JUNIOR', ci:'5501287'},
+  {id:'P025', name:'DENIS ACOSTA, LUCAS ABEL', role:'PROMOTER JUNIOR', ci:'6783849'},
+  {id:'P026', name:'MELGAREJO, SEBASTIAN', role:'PROMOTER JUNIOR', ci:'5413456'},
+  {id:'P027', name:'ZORRILLA PATIÑO, JORGE DANIEL', role:'PROMOTER JUNIOR', ci:'5471096'},
 ];
+
+// Migracion de ids: si el dispositivo ya tenia la app instalada con la
+// lista vieja (ids que no coincidian con el panel/index.html), esto
+// corrige el id de cada persona ya guardada localmente, buscandola por
+// nombre -- editar solo el array de arriba no alcanza porque ya se habia
+// grabado una copia en el IndexedDB del celular la primera vez que se abrio
+// la app, y esa copia nunca se vuelve a pisar sola.
+const MIGRACION_IDS = Object.fromEntries(INITIAL_PERSONS.map(p => [p.name, p.id]));
+async function migrarIdsPersonas() {
+  const stored = await dbGetAll('persons');
+  for (const p of stored) {
+    const idCorrecto = MIGRACION_IDS[p.name];
+    if (idCorrecto && p.id !== idCorrecto) {
+      await dbDelete('persons', p.id);
+      await dbPut('persons', { ...p, id: idCorrecto });
+    }
+  }
+}
 
 const STATUS_LABELS = {
   PRESENTE: 'OK', AUSENTE: 'AUSENTE', LIBRE: 'DIA LIBRE', REPOSO: 'REPOSO',
@@ -1484,7 +1513,8 @@ async function init() {
     for (const p of INITIAL_PERSONS) await dbPut('persons', p);
     persons = [...INITIAL_PERSONS];
   } else {
-    persons = stored;
+    await migrarIdsPersonas();
+    persons = await dbGetAll('persons');
   }
 
   renderPersonList();
