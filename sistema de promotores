@@ -1517,6 +1517,31 @@ async function init() {
     persons = await dbGetAll('persons');
   }
 
+  // Traer la nomina en vivo desde la planilla (mismo endpoint /promotores que usa
+  // el panel de administracion), para que un cambio de cargo/nombre hecho ahi se
+  // refleje sin depender de que este dispositivo reciba una copia nueva del
+  // array INITIAL_PERSONS -- eso solo pasaba una vez, al instalar la app.
+  try {
+    const workerUrl = localStorage.getItem('gasUrl') || WORKER_URL;
+    const res = await fetch(`${workerUrl}/promotores?key=${GAS_SECRET}`);
+    const data = await res.json();
+    if (data.ok && data.promotores && data.promotores.length > 0) {
+      const existingMap = {};
+      persons.forEach(p => existingMap[p.id] = p);
+      const idsDelSheet = new Set(data.promotores.map(p => p.id));
+      const actualizados = data.promotores.map(p => ({
+        id: p.id, name: p.name, role: p.role || '', ci: p.ci || '',
+        inactive: existingMap[p.id]?.inactive || false,
+      }));
+      // Preserva a quien se haya agregado manualmente desde esta app y todavia no este en la planilla
+      const soloLocales = persons.filter(p => !idsDelSheet.has(p.id));
+      persons = [...actualizados, ...soloLocales];
+      for (const p of persons) await dbPut('persons', p);
+    }
+  } catch (e) {
+    // Sin conexion: seguimos con lo que ya tenia guardado el dispositivo
+  }
+
   renderPersonList();
   // Auto-sync al abrir y cada 5 minutos
   startAutoSync();

@@ -206,12 +206,14 @@ const KEY    = 'HONOR2026';
 // ══════════════════════════════════════════════
 // PROMOTORES
 // ══════════════════════════════════════════════
-// Esta lista tiene que tener EXACTAMENTE los mismos id que la lista de
-// promotores del panel de administracion (Honor-sistema-de-control-) --
-// el id es lo unico que usa el panel para saber de quien es cada
-// marcacion, asi que si no coinciden, las marcaciones quedan asociadas a
-// la persona equivocada (o a nadie) del lado del panel.
-const PERSONS = [
+// Esta lista es solo un FALLBACK para cuando no hay conexion al abrir la
+// app -- en cada carga, init() intenta traer la nomina en vivo desde la
+// planilla (vía el mismo endpoint /promotores que usa el panel de
+// administracion), asi que un cambio de cargo o nombre en la planilla se
+// refleja aca sin tener que copiar y pegar este array a mano. Si en algun
+// momento se agrega o saca gente de la planilla y esta copia queda vieja,
+// la app sigue funcionando offline con estos datos.
+const PERSONS_FALLBACK = [
   {id:'P001',name:'CARABAJAL ORTIZ, RUTH ELISABETH',role:'PROMOTER JUNIOR',ci:'6015304'},
   {id:'P002',name:'DALLAS FONTANA ESTIGARRIBIA, RUTH ARACELY',role:'PROMOTER JUNIOR',ci:'5532811'},
   {id:'P003',name:'IRENE PAOLA ESCOBAR TOLEDO',role:'MERCHANDISER',ci:''},
@@ -230,6 +232,7 @@ const PERSONS = [
   {id:'P016',name:'ARNALDO DE JESUS NOGUERA NUÑEZ',role:'MERCHANDISER',ci:''},
   {id:'P017',name:'XIMENA MOLAS',role:'MERCHANDISER',ci:''},
 ];
+let PERSONS = PERSONS_FALLBACK;
 
 // ══════════════════════════════════════════════
 // STATE
@@ -239,7 +242,7 @@ let person = null, photo = null, tipo = null, today = '';
 // ══════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════
-function init() {
+async function init() {
   tick();
   setInterval(tick, 1000);
   renderList(PERSONS);
@@ -247,6 +250,21 @@ function init() {
     if (!e.target.closest('#searchWrap') && !e.target.closest('#dropdown'))
       document.getElementById('dropdown').classList.remove('open');
   });
+
+  // Traer la nomina en vivo desde la planilla (mismo endpoint que usa el panel
+  // de administracion), para que un cambio de cargo/nombre ahi se refleje sin
+  // tener que reinstalar la app ni copiar el array PERSONS a mano.
+  try {
+    const res = await fetch(WORKER + '/promotores?key=' + KEY);
+    const data = await res.json();
+    if (data.ok && data.promotores && data.promotores.length > 0) {
+      PERSONS = data.promotores.map(p => ({ id: p.id, name: p.name, role: p.role || '', ci: p.ci || '' }));
+      // Si el usuario todavia no abrio el buscador, refrescamos la lista visible con los datos frescos
+      if (!document.getElementById('dropdown').classList.contains('open')) renderList(PERSONS);
+    }
+  } catch (e) {
+    // Sin conexion: seguimos con PERSONS_FALLBACK, ya cargado arriba
+  }
 }
 
 function tick() {
