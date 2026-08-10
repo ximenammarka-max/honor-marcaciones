@@ -42,6 +42,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);min-height:100dvh;d
 .tipo-btn.sel-e{border-color:var(--green);background:#eaf6ee;color:var(--green)}
 .tipo-btn.sel-s{border-color:var(--red);background:#fdf0ee;color:var(--red)}
 .tipo-btn.sel-a{border-color:#f39c12;background:#fef9ee;color:#d68910}
+.tipo-btn:disabled{opacity:.45;cursor:not-allowed}
+.tipo-btn:disabled:active{transform:none}
+.tipo-done{font-size:.6rem;font-weight:700;color:var(--green);min-height:.8rem}
 
 /* PERSON */
 .search-wrap{position:relative}
@@ -144,13 +147,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);min-height:100dvh;d
     <div class="lbl">Tipo de marcación <span class="req">*</span></div>
     <div class="tipo-row">
       <button class="tipo-btn" id="btnE" onclick="setTipo('ENTRADA')">
-        <span class="ico">🟢</span><span>Entrada</span>
+        <span class="ico">🟢</span><span>Entrada</span><span class="tipo-done" id="doneE"></span>
       </button>
       <button class="tipo-btn" id="btnA" onclick="setTipo('ALMUERZO')">
-        <span class="ico">🟡</span><span>Almuerzo</span>
+        <span class="ico">🟡</span><span>Almuerzo</span><span class="tipo-done" id="doneA"></span>
       </button>
       <button class="tipo-btn" id="btnS" onclick="setTipo('SALIDA')">
-        <span class="ico">🔴</span><span>Salida</span>
+        <span class="ico">🔴</span><span>Salida</span><span class="tipo-done" id="doneS"></span>
       </button>
     </div>
   </div>
@@ -238,6 +241,7 @@ let PERSONS = PERSONS_FALLBACK;
 // STATE
 // ══════════════════════════════════════════════
 let person = null, photo = null, tipo = null, today = '';
+let marcasHoy = { ENTRADA: null, ALMUERZO: null, SALIDA: null };
 
 // ══════════════════════════════════════════════
 // INIT
@@ -283,10 +287,54 @@ const pad = n => String(n).padStart(2,'0');
 // TIPO
 // ══════════════════════════════════════════════
 function setTipo(t) {
+  if (marcasHoy[t]) return; // ya se marco hoy, no se puede volver a elegir (evita pisar la foto/hora ya registrada)
   tipo = t;
   document.getElementById('btnE').className = 'tipo-btn' + (t==='ENTRADA' ?' sel-e':'');
   document.getElementById('btnA').className = 'tipo-btn' + (t==='ALMUERZO'?' sel-a':'');
   document.getElementById('btnS').className = 'tipo-btn' + (t==='SALIDA'  ?' sel-s':'');
+}
+
+// Refleja en los 3 botones cuales tipos ya se marcaron hoy para la persona
+// seleccionada: los deshabilita y muestra la hora ya registrada, para que
+// no puedan reenviar y pisar la foto/hora de la primera marcación del dia.
+function actualizarBotonesTipo() {
+  const map = { ENTRADA: ['btnE','doneE'], ALMUERZO: ['btnA','doneA'], SALIDA: ['btnS','doneS'] };
+  Object.keys(map).forEach(t => {
+    const [btnId, doneId] = map[t];
+    const btn = document.getElementById(btnId);
+    const done = document.getElementById(doneId);
+    if (marcasHoy[t]) {
+      btn.disabled = true;
+      done.textContent = '✓ ' + marcasHoy[t];
+      if (tipo === t) { tipo = null; btn.classList.remove('sel-e','sel-a','sel-s'); }
+    } else {
+      btn.disabled = false;
+      done.textContent = '';
+    }
+  });
+}
+
+// Trae las marcaciones ya registradas hoy para esta persona (mismo endpoint
+// GET que usa el panel), asi la app sabe de antemano que tipos ya estan
+// hechos. El backend igual vuelve a validar esto al recibir el POST, por si
+// no hay conexion para esta consulta o queda informacion vieja en pantalla.
+async function fetchMarcasHoy(personId) {
+  marcasHoy = { ENTRADA: null, ALMUERZO: null, SALIDA: null };
+  try {
+    const res = await fetch(`${WORKER}?key=${KEY}&desde=${today}&hasta=${today}`);
+    const data = await res.json();
+    if (data.ok && data.data) {
+      const fila = data.data.find(r => r.personId === personId);
+      if (fila) {
+        marcasHoy.ENTRADA  = fila.horaEntrada  || null;
+        marcasHoy.ALMUERZO = fila.horaAlmuerzo || null;
+        marcasHoy.SALIDA   = fila.horaSalida   || null;
+      }
+    }
+  } catch (e) {
+    // Sin conexion: no sabemos que ya se marco, pero el backend lo va a rechazar igual si corresponde
+  }
+  actualizarBotonesTipo();
 }
 
 // ══════════════════════════════════════════════
@@ -324,10 +372,13 @@ function selectPerson(id) {
   document.getElementById('selName').textContent = person.name;
   document.getElementById('selRole').textContent = person.role;
   document.getElementById('selPerson').classList.add('show');
+  fetchMarcasHoy(person.id);
 }
 
 function clearPerson() {
   person = null;
+  marcasHoy = { ENTRADA: null, ALMUERZO: null, SALIDA: null };
+  actualizarBotonesTipo();
   document.getElementById('selPerson').classList.remove('show');
   document.getElementById('searchWrap').style.display = 'block';
 }
@@ -419,6 +470,7 @@ async function submit() {
   if (!tipo)   return showErr('Seleccioná si es Entrada o Salida');
   if (!person) return showErr('Seleccioná tu nombre');
   if (!photo)  return showErr('Tomá tu foto');
+  if (marcasHoy[tipo]) return showErr(`Ya marcaste ${tipo.toLowerCase()} hoy a las ${marcasHoy[tipo]}.`);
 
   const btn = document.getElementById('submitBtn');
   btn.disabled = true;
@@ -457,9 +509,9 @@ async function submit() {
     document.getElementById('successScreen').classList.add('show');
     document.getElementById('sName').textContent = person.name.split(',')[0];
     const [y,m,d] = today.split('-');
+    const labelTipo = tipo==='ENTRADA' ? '🟢 Entrada' : tipo==='ALMUERZO' ? '🟡 Almuerzo' : '🔴 Salida';
     document.getElementById('sDetail').textContent =
-      `${tipo==='ENTRADA'?'🟢 Entrada':'🔴 Salida'} registrada el ${d}/${m}/${y} a las ${hora}.`+
-      (obs ? `\nObs: ${obs}` : '')+
+      `${labelTipo} registrada el ${d}/${m}/${y} a las ${hora}.`+
       '\n\nTu supervisora ya puede verla.';
 
   } catch(err) {
@@ -477,13 +529,15 @@ function showErr(msg) {
 
 function reset() {
   person = null; photo = null; tipo = null;
+  marcasHoy = { ENTRADA: null, ALMUERZO: null, SALIDA: null };
   document.getElementById('successScreen').classList.remove('show');
   document.getElementById('mainCard').style.display = 'flex';
   document.getElementById('selPerson').classList.remove('show');
   document.getElementById('searchWrap').style.display = 'block';
   document.getElementById('btnE').className = 'tipo-btn';
+  document.getElementById('btnA').className = 'tipo-btn';
   document.getElementById('btnS').className = 'tipo-btn';
-  document.getElementById('obsField').value = '';
+  actualizarBotonesTipo();
   document.getElementById('submitBtn').disabled = false;
   document.getElementById('submitBtn').innerHTML = '<span>✓</span><span>Confirmar marcación</span>';
   clearPhoto();
