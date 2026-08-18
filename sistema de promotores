@@ -1984,22 +1984,59 @@ async function clearAll() {
   renderPersonList();
 }
 
+// El estado local "LIBRE" se guarda en la planilla como "DIA LIBRE" --
+// el resto de los estados usan el mismo texto en ambos lados (ver el
+// statusMap de doAutoSync, que hace la conversion inversa al leer).
+const ESTADO_LOCAL_A_SHEET = { LIBRE: 'DIA LIBRE' };
+
 async function saveDay() {
   modalState.obs = document.getElementById('obsInput').value;
   if (!modalState.status) {
     showToast('Seleccioná un estado', 'error');
     return;
   }
+
+  // Antes esto SOLO se guardaba en el IndexedDB local del navegador -- otro
+  // admin abriendo el sistema en otra computadora no veia el estado ni la
+  // observacion cargados aca, porque nunca llegaban a la planilla
+  // compartida. Ahora se manda primero al Worker (que lo escribe en Sheets)
+  // y solo si eso confirma se guarda tambien localmente como cache.
+  const p = persons.find(x => x.id === modalState.personId);
+  const workerUrl = localStorage.getItem('gasUrl') || WORKER_URL;
+  let sincronizado = false;
+  try {
+    const res = await fetch(`${workerUrl}/estado-manual`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        key: GAS_SECRET,
+        personId: modalState.personId,
+        fecha: modalState.date,
+        estado: ESTADO_LOCAL_A_SHEET[modalState.status] || modalState.status,
+        observacion: modalState.obs,
+        nombre: p ? p.name : '',
+        ci: p ? p.ci : '',
+        cargo: p ? p.role : '',
+      }),
+    });
+    const data = await res.json().catch(() => null);
+    sincronizado = !!(data && data.ok);
+    if (!sincronizado) console.error('estado-manual respondió sin ok:', data);
+  } catch (e) {
+    console.error('No se pudo sincronizar el estado con el servidor:', e);
+  }
+
   await dbPut('days', {
     key: `${modalState.personId}_${modalState.date}`,
     personId: modalState.personId,
     date: modalState.date,
     status: modalState.status,
     obs: modalState.obs,
-    photoData: modalState.photoData
+    photoData: modalState.photoData,
+    fuente: 'ADMIN',
   });
   closeModal();
-  showToast('Registro guardado', 'success');
+  showToast(sincronizado ? 'Registro guardado' : 'Guardado local -- no se pudo sincronizar con el servidor, otros admins no lo verán todavía', sincronizado ? 'success' : 'error');
   renderCalendar();
   renderPersonList();
 }
