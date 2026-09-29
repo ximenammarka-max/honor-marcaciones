@@ -277,7 +277,7 @@ let marcasHoy = { ENTRADA: null, ALMUERZO: null, SALIDA: null };
 async function init() {
   tick();
   setInterval(tick, 1000);
-  renderList(PERSONS);
+  renderHintBusqueda();
   document.addEventListener('click', e => {
     if (!e.target.closest('#searchWrap') && !e.target.closest('#dropdown'))
       document.getElementById('dropdown').classList.remove('open');
@@ -291,8 +291,10 @@ async function init() {
     const data = await res.json();
     if (data.ok && data.promotores && data.promotores.length > 0) {
       PERSONS = data.promotores.map(p => ({ id: p.id, name: p.name, role: p.role || '', ci: p.ci || '' }));
-      // Si el usuario todavia no abrio el buscador, refrescamos la lista visible con los datos frescos
-      if (!document.getElementById('dropdown').classList.contains('open')) renderList(PERSONS);
+      // Si ya habia una busqueda en curso (3+ letras), la re-filtra con los
+      // datos frescos -- pero nunca vuelve a mostrar la nomina completa.
+      const q = document.getElementById('searchInput').value.trim();
+      if (q.length >= MIN_LETRAS_BUSQUEDA) filterList();
     }
   } catch (e) {
     // Sin conexion: seguimos con PERSONS_FALLBACK, ya cargado arriba
@@ -412,14 +414,28 @@ function renderList(list) {
     : '<div style="padding:1rem;text-align:center;color:var(--gray);font-size:.85rem">Sin resultados</div>';
 }
 
+// Pedido: que un promotor no pueda ver el nombre de los demas -- este es un
+// dispositivo compartido, y antes tocar el buscador mostraba la nomina
+// entera (openList) o cualquier letra ya filtraba sobre esa lista visible.
+// Ahora no se muestra NINGUN nombre hasta escribir al menos 3 letras
+// propias: cada uno sigue encontrando su nombre normal (lo sabe de memoria),
+// pero no puede "pasear" la lista completa de compañeros.
+const MIN_LETRAS_BUSQUEDA = 3;
+
+function renderHintBusqueda() {
+  const dd = document.getElementById('dropdown');
+  dd.innerHTML = `<div style="padding:1rem;text-align:center;color:var(--gray);font-size:.85rem">Escribí al menos ${MIN_LETRAS_BUSQUEDA} letras de tu nombre</div>`;
+}
+
 function filterList() {
-  const q = document.getElementById('searchInput').value.toLowerCase();
+  const q = document.getElementById('searchInput').value.toLowerCase().trim();
+  if (q.length < MIN_LETRAS_BUSQUEDA) { renderHintBusqueda(); document.getElementById('dropdown').classList.add('open'); return; }
   renderList(PERSONS.filter(p => p.name.toLowerCase().includes(q)));
   document.getElementById('dropdown').classList.add('open');
 }
 
 function openList() {
-  renderList(PERSONS);
+  renderHintBusqueda();
   document.getElementById('dropdown').classList.add('open');
 }
 
