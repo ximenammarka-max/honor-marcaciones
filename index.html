@@ -341,6 +341,16 @@ function actualizarBotonesTipo() {
       done.textContent = '';
     }
   });
+  // Salida no se puede marcar sin haber marcado Entrada primero -- no tiene
+  // sentido registrar que alguien "se fue" de un dia en el que nunca
+  // registro que llego. A diferencia de Almuerzo (que solo avisa y deja
+  // seguir, por si alguien no marca el almuerzo formalmente), esto bloquea
+  // directo: el boton queda deshabilitado hasta que exista la Entrada.
+  if (!marcasHoy.ENTRADA && !marcasHoy.SALIDA) {
+    document.getElementById('btnS').disabled = true;
+    document.getElementById('doneS').textContent = 'Marcá Entrada primero';
+    if (tipo === 'SALIDA') { tipo = null; document.getElementById('btnS').classList.remove('sel-s'); }
+  }
   sugerirTipo();
 }
 
@@ -521,8 +531,6 @@ function clearPhoto() {
 function mensajeFueraDeOrden(t) {
   if (t === 'ALMUERZO' && !marcasHoy.ENTRADA)
     return '¿Estás seguro de enviar la marcación ALMUERZO? Todavía no marcaste ENTRADA hoy.';
-  if (t === 'SALIDA' && !marcasHoy.ENTRADA)
-    return '¿Estás seguro de enviar la marcación SALIDA? Todavía no marcaste ENTRADA hoy.';
   if (t === 'SALIDA' && !marcasHoy.ALMUERZO)
     return '¿Estás seguro de enviar la marcación SALIDA? Todavía no marcaste ALMUERZO hoy.';
   return null;
@@ -533,6 +541,11 @@ function submit() {
   if (!person) return showErr('Seleccioná tu nombre');
   if (!photo)  return showErr('Tomá tu foto');
   if (marcasHoy[tipo]) return showErr(`Ya marcaste ${tipo.toLowerCase()} hoy a las ${marcasHoy[tipo]}.`);
+  // Bloqueo duro (no solo confirmacion): no tiene sentido una Salida sin
+  // Entrada ese mismo dia. El boton ya queda deshabilitado para esto, este
+  // chequeo es la segunda barrera por si el estado del boton quedo
+  // desactualizado (ej. reconexion a mitad de la carga).
+  if (tipo === 'SALIDA' && !marcasHoy.ENTRADA) return showErr('No podés marcar SALIDA sin haber marcado ENTRADA hoy.');
   showErr('');
 
   const msg = mensajeFueraDeOrden(tipo);
