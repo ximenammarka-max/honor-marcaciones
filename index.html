@@ -341,15 +341,18 @@ function actualizarBotonesTipo() {
       done.textContent = '';
     }
   });
-  // Salida no se puede marcar sin haber marcado Entrada primero -- no tiene
-  // sentido registrar que alguien "se fue" de un dia en el que nunca
-  // registro que llego. A diferencia de Almuerzo (que solo avisa y deja
-  // seguir, por si alguien no marca el almuerzo formalmente), esto bloquea
-  // directo: el boton queda deshabilitado hasta que exista la Entrada.
-  if (!marcasHoy.ENTRADA && !marcasHoy.SALIDA) {
-    document.getElementById('btnS').disabled = true;
-    document.getElementById('doneS').textContent = 'Marcá Entrada primero';
-    if (tipo === 'SALIDA') { tipo = null; document.getElementById('btnS').classList.remove('sel-s'); }
+  // Almuerzo y Salida no se pueden marcar sin haber marcado Entrada primero
+  // -- no tiene sentido registrar que alguien almorzo o se fue de un dia en
+  // el que nunca registro que llego. Ambos botones quedan deshabilitados
+  // hasta que exista la Entrada del dia.
+  if (!marcasHoy.ENTRADA) {
+    ['A','S'].forEach(suf => {
+      const id = 'btn'+suf;
+      if (marcasHoy[suf==='A'?'ALMUERZO':'SALIDA']) return; // ya marcado, no pisar el "✓ hora"
+      document.getElementById(id).disabled = true;
+      document.getElementById('done'+suf).textContent = 'Marcá Entrada primero';
+      if (tipo === (suf==='A'?'ALMUERZO':'SALIDA')) { tipo = null; document.getElementById(id).classList.remove('sel-a','sel-s'); }
+    });
   }
   sugerirTipo();
 }
@@ -523,14 +526,12 @@ function clearPhoto() {
 // ══════════════════════════════════════════════
 // SUBMIT
 // ══════════════════════════════════════════════
-// Reportado por promotores: mandaban ALMUERZO o SALIDA sin haber marcado
-// ENTRADA (o SALIDA sin ALMUERZO) sin darse cuenta -- el orden logico del
-// dia es Entrada -> Almuerzo -> Salida, y saltearse un paso antes no
-// avisaba nada. El mensaje nombra el tipo que se esta por enviar Y el que
-// falta, para que quede claro por que se pregunta.
+// Reportado por promotores: mandaban SALIDA sin haber marcado ALMUERZO sin
+// darse cuenta. Almuerzo sin Entrada y Salida sin Entrada ya estan
+// bloqueadas de raiz en actualizarBotonesTipo() (esos botones ni se pueden
+// tocar); esto solo cubre el ultimo caso, que se deja pasar con aviso por
+// si la persona de verdad no marca el almuerzo formalmente.
 function mensajeFueraDeOrden(t) {
-  if (t === 'ALMUERZO' && !marcasHoy.ENTRADA)
-    return '¿Estás seguro de enviar la marcación ALMUERZO? Todavía no marcaste ENTRADA hoy.';
   if (t === 'SALIDA' && !marcasHoy.ALMUERZO)
     return '¿Estás seguro de enviar la marcación SALIDA? Todavía no marcaste ALMUERZO hoy.';
   return null;
@@ -541,11 +542,11 @@ function submit() {
   if (!person) return showErr('Seleccioná tu nombre');
   if (!photo)  return showErr('Tomá tu foto');
   if (marcasHoy[tipo]) return showErr(`Ya marcaste ${tipo.toLowerCase()} hoy a las ${marcasHoy[tipo]}.`);
-  // Bloqueo duro (no solo confirmacion): no tiene sentido una Salida sin
-  // Entrada ese mismo dia. El boton ya queda deshabilitado para esto, este
-  // chequeo es la segunda barrera por si el estado del boton quedo
-  // desactualizado (ej. reconexion a mitad de la carga).
-  if (tipo === 'SALIDA' && !marcasHoy.ENTRADA) return showErr('No podés marcar SALIDA sin haber marcado ENTRADA hoy.');
+  // Bloqueo duro (no solo confirmacion): no tiene sentido un Almuerzo o una
+  // Salida sin Entrada ese mismo dia. Los botones ya quedan deshabilitados
+  // para esto, este chequeo es la segunda barrera por si el estado del
+  // boton quedo desactualizado (ej. reconexion a mitad de la carga).
+  if ((tipo === 'ALMUERZO' || tipo === 'SALIDA') && !marcasHoy.ENTRADA) return showErr(`No podés marcar ${tipo} sin haber marcado ENTRADA hoy.`);
   showErr('');
 
   const msg = mensajeFueraDeOrden(tipo);
