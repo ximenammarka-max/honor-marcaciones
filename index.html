@@ -111,6 +111,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);min-height:100dvh;d
 /* ERROR BANNER */
 .err-banner{background:#fdf0ee;border:1.5px solid var(--red);border-radius:10px;padding:.75rem 1rem;font-size:.8rem;color:var(--red);display:none}
 .err-banner.show{display:block}
+
+/* CONFIRM OVERLAY (marcacion fuera de orden -- ej. Almuerzo sin Entrada) */
+.confirm-overlay{display:none;position:fixed;inset:0;background:rgba(26,31,58,.55);align-items:center;justify-content:center;padding:1.25rem;z-index:200}
+.confirm-overlay.show{display:flex}
+.confirm-card{background:var(--white);border-radius:var(--r);padding:1.5rem 1.25rem;max-width:360px;width:100%;text-align:center;display:flex;flex-direction:column;gap:.9rem}
+.confirm-ico{font-size:2rem}
+.confirm-msg{font-size:.92rem;color:var(--navy);font-weight:600;line-height:1.4}
+.confirm-btns{display:flex;flex-direction:column;gap:.5rem;margin-top:.25rem}
+.btn-confirm-yes{background:#f39c12;color:#fff;border:none;border-radius:10px;padding:.8rem;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:700;cursor:pointer}
+.btn-confirm-no{background:var(--cream);color:var(--navy);border:2px solid var(--gray-l);border-radius:10px;padding:.75rem;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer}
 </style>
 </head>
 <body>
@@ -128,6 +138,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);min-height:100dvh;d
   <div class="success-name" id="sName"></div>
   <div class="success-detail" id="sDetail"></div>
   <button class="btn-new" onclick="reset()">Nueva marcación</button>
+</div>
+
+<!-- CONFIRMACION: marcacion fuera de orden (ej. Almuerzo sin Entrada) -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-card">
+    <div class="confirm-ico">⚠️</div>
+    <div class="confirm-msg" id="confirmMsg"></div>
+    <div class="confirm-btns">
+      <button class="btn-confirm-yes" onclick="confirmarEnvioFueraDeOrden()">Sí, enviar igual</button>
+      <button class="btn-confirm-no" onclick="cancelarEnvioFueraDeOrden()">Cancelar</button>
+    </div>
+  </div>
 </div>
 
 <!-- MAIN CARD -->
@@ -491,15 +513,49 @@ function clearPhoto() {
 // ══════════════════════════════════════════════
 // SUBMIT
 // ══════════════════════════════════════════════
-async function submit() {
+// Reportado por promotores: mandaban ALMUERZO o SALIDA sin haber marcado
+// ENTRADA (o SALIDA sin ALMUERZO) sin darse cuenta -- el orden logico del
+// dia es Entrada -> Almuerzo -> Salida, y saltearse un paso antes no
+// avisaba nada. El mensaje nombra el tipo que se esta por enviar Y el que
+// falta, para que quede claro por que se pregunta.
+function mensajeFueraDeOrden(t) {
+  if (t === 'ALMUERZO' && !marcasHoy.ENTRADA)
+    return '¿Estás seguro de enviar la marcación ALMUERZO? Todavía no marcaste ENTRADA hoy.';
+  if (t === 'SALIDA' && !marcasHoy.ENTRADA)
+    return '¿Estás seguro de enviar la marcación SALIDA? Todavía no marcaste ENTRADA hoy.';
+  if (t === 'SALIDA' && !marcasHoy.ALMUERZO)
+    return '¿Estás seguro de enviar la marcación SALIDA? Todavía no marcaste ALMUERZO hoy.';
+  return null;
+}
+
+function submit() {
   if (!tipo)   return showErr('Seleccioná si es Entrada o Salida');
   if (!person) return showErr('Seleccioná tu nombre');
   if (!photo)  return showErr('Tomá tu foto');
   if (marcasHoy[tipo]) return showErr(`Ya marcaste ${tipo.toLowerCase()} hoy a las ${marcasHoy[tipo]}.`);
+  showErr('');
 
+  const msg = mensajeFueraDeOrden(tipo);
+  if (msg) {
+    document.getElementById('confirmMsg').textContent = msg;
+    document.getElementById('confirmOverlay').classList.add('show');
+    return;
+  }
+  enviarMarcacion();
+}
+
+function cancelarEnvioFueraDeOrden() {
+  document.getElementById('confirmOverlay').classList.remove('show');
+}
+
+function confirmarEnvioFueraDeOrden() {
+  document.getElementById('confirmOverlay').classList.remove('show');
+  enviarMarcacion();
+}
+
+async function enviarMarcacion() {
   const btn = document.getElementById('submitBtn');
   btn.disabled = true;
-  showErr('');
 
   const hora = pad(new Date().getHours())+':'+pad(new Date().getMinutes());
 
@@ -555,6 +611,7 @@ function showErr(msg) {
 function reset() {
   person = null; photo = null; tipo = null;
   marcasHoy = { ENTRADA: null, ALMUERZO: null, SALIDA: null };
+  document.getElementById('confirmOverlay').classList.remove('show');
   document.getElementById('successScreen').classList.remove('show');
   document.getElementById('mainCard').style.display = 'flex';
   document.getElementById('selPerson').classList.remove('show');
