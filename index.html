@@ -45,6 +45,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);min-height:100dvh;d
 .tipo-btn:disabled{opacity:.45;cursor:not-allowed}
 .tipo-btn:disabled:active{transform:none}
 .tipo-done{font-size:.6rem;font-weight:700;color:var(--green);min-height:.8rem}
+.tipo-when{font-size:.62rem;color:var(--gray);text-align:center;line-height:1.15}
+.tipo-btn.sel-e .tipo-when,.tipo-btn.sel-a .tipo-when,.tipo-btn.sel-s .tipo-when{color:inherit;opacity:.75}
+.tipo-btn.suggest{box-shadow:0 0 0 2px var(--gold)}
+.tipo-hint{font-size:.75rem;color:var(--navy);background:#fef9ee;border:1.5px solid var(--gold);border-radius:8px;padding:.5rem .7rem;text-align:center;font-weight:600;display:none}
+.tipo-hint.show{display:block}
 
 /* PERSON */
 .search-wrap{position:relative}
@@ -145,15 +150,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);min-height:100dvh;d
   <!-- Tipo -->
   <div>
     <div class="lbl">Tipo de marcación <span class="req">*</span></div>
+    <div class="tipo-hint" id="tipoHint"></div>
     <div class="tipo-row">
       <button class="tipo-btn" id="btnE" onclick="setTipo('ENTRADA')">
-        <span class="ico">🟢</span><span>Entrada</span><span class="tipo-done" id="doneE"></span>
+        <span class="ico">🟢</span><span>Entrada</span><span class="tipo-when">Al llegar</span><span class="tipo-done" id="doneE"></span>
       </button>
       <button class="tipo-btn" id="btnA" onclick="setTipo('ALMUERZO')">
-        <span class="ico">🟡</span><span>Almuerzo</span><span class="tipo-done" id="doneA"></span>
+        <span class="ico">🟡</span><span>Almuerzo</span><span class="tipo-when">Antes de salir a comer</span><span class="tipo-done" id="doneA"></span>
       </button>
       <button class="tipo-btn" id="btnS" onclick="setTipo('SALIDA')">
-        <span class="ico">🔴</span><span>Salida</span><span class="tipo-done" id="doneS"></span>
+        <span class="ico">🔴</span><span>Salida</span><span class="tipo-when">Al terminar el día</span><span class="tipo-done" id="doneS"></span>
       </button>
     </div>
   </div>
@@ -303,6 +309,7 @@ function actualizarBotonesTipo() {
     const [btnId, doneId] = map[t];
     const btn = document.getElementById(btnId);
     const done = document.getElementById(doneId);
+    btn.classList.remove('suggest');
     if (marcasHoy[t]) {
       btn.disabled = true;
       done.textContent = '✓ ' + marcasHoy[t];
@@ -312,6 +319,24 @@ function actualizarBotonesTipo() {
       done.textContent = '';
     }
   });
+  sugerirTipo();
+}
+
+// Reportado por promotores: se confunden sobre cual de los 3 botones les
+// toca despues de Entrada (sobre todo entre Almuerzo y Salida). Sugiere el
+// siguiente paso logico -- el primero sin marcar en el orden natural del
+// dia -- resaltandolo con un borde dorado y un texto arriba, sin bloquear
+// que elijan otro si de verdad corresponde otro (ej. no salen a almorzar).
+function sugerirTipo() {
+  const hint = document.getElementById('tipoHint');
+  if (!person) { hint.classList.remove('show'); return; }
+  const orden = [['ENTRADA','btnE','Entrada'], ['ALMUERZO','btnA','Almuerzo'], ['SALIDA','btnS','Salida']];
+  const siguiente = orden.find(([t]) => !marcasHoy[t]);
+  if (!siguiente) { hint.classList.remove('show'); return; }
+  const [t, btnId, label] = siguiente;
+  document.getElementById(btnId).classList.add('suggest');
+  hint.textContent = `👉 Te falta marcar: ${label}`;
+  hint.classList.add('show');
 }
 
 // Trae las marcaciones ya registradas hoy para esta persona (mismo endpoint
