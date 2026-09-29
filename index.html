@@ -198,8 +198,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);min-height:100dvh;d
       <button class="btn-change" onclick="clearPerson()">Cambiar</button>
     </div>
     <div class="search-wrap" id="searchWrap">
-      <span class="search-ico">👤</span>
-      <input type="text" id="searchInput" placeholder="Buscá tu nombre..." oninput="filterList()" onfocus="openList()" autocomplete="off" />
+      <span class="search-ico">🪪</span>
+      <input type="text" inputmode="numeric" id="searchInput" placeholder="Ingresá tu cédula..." oninput="filterList()" onfocus="openList()" autocomplete="off" />
     </div>
     <div class="dropdown" id="dropdown"></div>
   </div>
@@ -245,23 +245,35 @@ const KEY    = 'HONOR2026';
 // momento se agrega o saca gente de la planilla y esta copia queda vieja,
 // la app sigue funcionando offline con estos datos.
 const PERSONS_FALLBACK = [
-  {id:'P001',name:'CARABAJAL ORTIZ, RUTH ELISABETH',role:'PROMOTER JUNIOR',ci:'6015304'},
-  {id:'P002',name:'DALLAS FONTANA ESTIGARRIBIA, RUTH ARACELY',role:'PROMOTER JUNIOR',ci:'5532811'},
-  {id:'P003',name:'IRENE PAOLA ESCOBAR TOLEDO',role:'MERCHANDISER',ci:''},
-  {id:'P004',name:'ROMAN LEZCANO, JESUS EDUARDO',role:'PROMOTER JUNIOR',ci:''},
+  {id:'P001',name:'CARABAJAL ORTIZ, RUTH ELISABETH',role:'SENIOR PROMOTER',ci:'6015304'},
+  {id:'P002',name:'DALLAS FONTANA ESTIGARRIBIA, RUTH ARACELY',role:'JUNIOR PROMOTER',ci:'6954664'},
+  {id:'P003',name:'ESCOBAR TOLEDO, IRENE PAOLA',role:'MERCHANDISER',ci:'6665688'},
+  {id:'P004',name:'ROMAN LEZCANO, JESUS EDUARDO',role:'JUNIOR PROMOTER',ci:'5532811'},
   {id:'P005',name:'ACOSTA PAIVA, KEVIN MIGUEL',role:'MERCHANDISER',ci:'5773630'},
-  {id:'P006',name:'BRITEZ VAZQUEZ, MARCOS EMMANUEL',role:'PROMOTER JUNIOR',ci:'5309703'},
-  {id:'P007',name:'CABRERA PEÑA, LIZI SOELI',role:'PROMOTER JUNIOR',ci:'6943961'},
-  {id:'P008',name:'CABRERA SANTACRUZ, ALEXIS RAMON',role:'PROMOTER JUNIOR',ci:'5388298'},
-  {id:'P009',name:'MELGAREJO DOMINGUEZ, DEBORA NOEMI',role:'PROMOTER JUNIOR',ci:'5766354'},
-  {id:'P010',name:'OZUNA MARTINEZ, SORAYA NAYARA',role:'PROMOTER SENIOR',ci:'7251872'},
+  {id:'P006',name:'BRITEZ VAZQUEZ, MARCOS EMMANUEL',role:'SENIOR PROMOTER',ci:'5309703'},
+  {id:'P007',name:'CABRERA PEÑA, LIZI SOELI',role:'SENIOR PROMOTER',ci:'6943961'},
+  {id:'P009',name:'CABRERA SANTACRUZ, ALEXIS RAMON',role:'SENIOR PROMOTER',ci:'5388298'},
+  {id:'P010',name:'OZUNA MARTINEZ, SORAYA NAYARA',role:'EXPERT PROMOTER',ci:'7251872'},
   {id:'P011',name:'ROJAS BOGADO, JUAN JOSE MISSAC',role:'MERCHANDISER',ci:'4942426'},
-  {id:'P012',name:'ROJAS GAMARRA, AYELEN YAMILA',role:'PROMOTER SENIOR',ci:'5690504'},
-  {id:'P013',name:'RUIZ DIAZ GUERRERO, ALVARO SEBASTIAN',role:'PROMOTER SENIOR',ci:'7165754'},
-  {id:'P014',name:'JUSTIN SEBASTIAN GARAY VERGARA',role:'PROMOTER JUNIOR',ci:''},
-  {id:'P015',name:'QUINTANA VEGA, IHARA BELEN',role:'PROMOTER JUNIOR',ci:''},
-  {id:'P016',name:'ARNALDO DE JESUS NOGUERA NUÑEZ',role:'MERCHANDISER',ci:''},
-  {id:'P017',name:'XIMENA MOLAS',role:'MERCHANDISER',ci:''},
+  {id:'P012',name:'ROJAS GAMARRA, AYELEN YAMILA',role:'SENIOR PROMOTER',ci:'5690504'},
+  {id:'P013',name:'RUIZ DIAZ GUERRERO, ALVARO SEBASTIAN',role:'EXPERT PROMOTER',ci:'7165754'},
+  {id:'P014',name:'GARAY VERGARA, JUSTIN SEBASTIAN',role:'JUNIOR PROMOTER',ci:'7090906'},
+  {id:'P015',name:'QUINTANA VEGA, IHARA BELEN',role:'JUNIOR PROMOTER',ci:'4676121'},
+  {id:'P016',name:'NOGUERA NUÑEZ, ARNALDO DE JESUS',role:'MERCHANDISER',ci:'6022787'},
+  {id:'P017',name:'ALARCON BENITEZ, NICOLAS MARIA',role:'ARCHITECT',ci:'5002579'},
+  {id:'P018',name:'BENITEZ QUEVEDO, SOFIA CORAL',role:'TRAINEE BACK OFFICE',ci:'6504437'},
+  {id:'P019',name:'VERA ARCE, DIEGO DAMIAN',role:'COMMUNITY ASSISTANT',ci:'4460542'},
+  {id:'P020',name:'FARIAS MEZA, GABRIELA BEATRIZ',role:'EXPERT TRAINER',ci:'5856162'},
+  {id:'P021',name:'FERNANDEZ VERA, BIANCA MARIA JOSE',role:'JUNIOR RETAIL MARKETING ANALYST',ci:'6559122'},
+  {id:'P022',name:'GODOY PERALTA, EMILIO EMMANUEL',role:'DESIGNER',ci:'4549551'},
+  {id:'P023',name:'DOLDÁN VALDEZ, LEONARDO GABRIEL',role:'BUSINESS INTELLIGENCE',ci:'5031698'},
+  {id:'P024',name:'MAYOR OVELAR, SEBASTIAN JESUS',role:'TRAINEE BACK OFFICE',ci:'5278717'},
+  {id:'P025',name:'MEZA VILLALBA, MARIO EDUARDO',role:'SUPERVISOR EXPERT',ci:'3990722'},
+  {id:'P026',name:'ORUE PEREIRA, CAMILO ADRIAN',role:'JUNIOR DISPLAY COORDINATOR',ci:'4552656'},
+  {id:'P027',name:'ROMAN RAMIREZ, FRANCO',role:'SENIOR B2B',ci:'7213500'},
+  {id:'P028',name:'ROMAN SANCHEZ, IVANNA AYELEN',role:'JR CITY MANAGER',ci:'5700255'},
+  {id:'P029',name:'ZAPATTINI ZORRILLA, MARIA LAURA',role:'SENIOR BACK OFFICE',ci:'4183309'},
+  {id:'P030',name:'OLIVEIRA MACHADO, CRISTHIAN',role:'SENIOR TRAINER',ci:'4205540'},
 ];
 let PERSONS = PERSONS_FALLBACK;
 
@@ -291,10 +303,10 @@ async function init() {
     const data = await res.json();
     if (data.ok && data.promotores && data.promotores.length > 0) {
       PERSONS = data.promotores.map(p => ({ id: p.id, name: p.name, role: p.role || '', ci: p.ci || '' }));
-      // Si ya habia una busqueda en curso (3+ letras), la re-filtra con los
+      // Si ya habia una busqueda en curso (3+ digitos), la re-filtra con los
       // datos frescos -- pero nunca vuelve a mostrar la nomina completa.
-      const q = document.getElementById('searchInput').value.trim();
-      if (q.length >= MIN_LETRAS_BUSQUEDA) filterList();
+      const q = document.getElementById('searchInput').value.replace(/\D/g, '');
+      if (q.length >= MIN_DIGITOS_BUSQUEDA) filterList();
     }
   } catch (e) {
     // Sin conexion: seguimos con PERSONS_FALLBACK, ya cargado arriba
@@ -417,20 +429,22 @@ function renderList(list) {
 // Pedido: que un promotor no pueda ver el nombre de los demas -- este es un
 // dispositivo compartido, y antes tocar el buscador mostraba la nomina
 // entera (openList) o cualquier letra ya filtraba sobre esa lista visible.
-// Ahora no se muestra NINGUN nombre hasta escribir al menos 3 letras
-// propias: cada uno sigue encontrando su nombre normal (lo sabe de memoria),
-// pero no puede "pasear" la lista completa de compañeros.
-const MIN_LETRAS_BUSQUEDA = 3;
+// Ahora no se muestra NINGUN nombre hasta escribir al menos 3 digitos de
+// cedula propios, y la busqueda es por cedula (no por nombre) -- a
+// diferencia del nombre, la cedula no se puede adivinar mirando de
+// costado ni recordar de un compañero, asi que ademas de ocultar la lista
+// evita que alguien marque por error la asistencia de otra persona.
+const MIN_DIGITOS_BUSQUEDA = 3;
 
 function renderHintBusqueda() {
   const dd = document.getElementById('dropdown');
-  dd.innerHTML = `<div style="padding:1rem;text-align:center;color:var(--gray);font-size:.85rem">Escribí al menos ${MIN_LETRAS_BUSQUEDA} letras de tu nombre</div>`;
+  dd.innerHTML = `<div style="padding:1rem;text-align:center;color:var(--gray);font-size:.85rem">Escribí al menos ${MIN_DIGITOS_BUSQUEDA} dígitos de tu cédula</div>`;
 }
 
 function filterList() {
-  const q = document.getElementById('searchInput').value.toLowerCase().trim();
-  if (q.length < MIN_LETRAS_BUSQUEDA) { renderHintBusqueda(); document.getElementById('dropdown').classList.add('open'); return; }
-  renderList(PERSONS.filter(p => p.name.toLowerCase().includes(q)));
+  const q = document.getElementById('searchInput').value.replace(/\D/g, '');
+  if (q.length < MIN_DIGITOS_BUSQUEDA) { renderHintBusqueda(); document.getElementById('dropdown').classList.add('open'); return; }
+  renderList(PERSONS.filter(p => (p.ci || '').includes(q)));
   document.getElementById('dropdown').classList.add('open');
 }
 
