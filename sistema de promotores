@@ -1427,7 +1427,7 @@ async function migrarIdsPersonas() {
 }
 
 const STATUS_LABELS = {
-  PRESENTE: 'OK', AUSENTE: 'AUSENTE', LIBRE: 'DIA LIBRE', REPOSO: 'REPOSO',
+  PRESENTE: 'Presente', AUSENTE: 'AUSENTE', LIBRE: 'DIA LIBRE', REPOSO: 'REPOSO',
   JUSTIFICADO: 'JUSTIFICADO', FERIADO: 'FERIADO', VACACIONES: 'VACACIONES',
   MATERNIDAD: 'MATERNIDAD', PERMISO: 'PERMISO', CAP: 'CAP', RENUNCIA: 'RENUNCIA'
 };
@@ -2574,7 +2574,7 @@ async function renderExcelView() {
 
       const label = status ? (STATUS_LABELS[status] || status) : '';
       const cls = status ? `cell-${status}` : 'cell-empty';
-      const display = status === 'PRESENTE' ? 'OK' : (label || '—');
+      const display = status === 'PRESENTE' ? 'Presente' : (label || '—');
       rowHtml += `<td class="${cls}">${display}</td>`;
     }
 
@@ -2740,7 +2740,7 @@ async function buildPersonSheet(wb, p, days, ym, weekFilter, sheetName) {
   // Summary
   rows.push([]);
   rows.push(['RESUMEN DEL PERÍODO','','','','']);
-  rows.push(['Días presentes (OK):', stats.PRESENTE]);
+  rows.push(['Días presentes:', stats.PRESENTE]);
   rows.push(['Días ausentes:', stats.AUSENTE]);
   rows.push(['Días libres:', stats.LIBRE]);
   rows.push(['Reposo:', stats.REPOSO]);
