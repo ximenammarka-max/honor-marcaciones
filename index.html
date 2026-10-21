@@ -36,6 +36,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);min-height:100dvh;d
 
 /* TIPO */
 .tipo-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem}
+.tipo-row.dos{grid-template-columns:1fr 1fr}
+.drop-imp{font-size:.62rem;font-weight:700;color:#92400e;background:#fef3c7;border-radius:4px;padding:.05rem .35rem;margin-left:.3rem}
 .tipo-btn{padding:.85rem;border:2px solid var(--gray-l);border-radius:10px;background:var(--cream);font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:600;color:var(--navy);cursor:pointer;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:.25rem}
 .tipo-btn .ico{font-size:1.5rem}
 .tipo-btn:active{transform:scale(.97)}
@@ -173,7 +175,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);min-height:100dvh;d
   <div>
     <div class="lbl">Tipo de marcación <span class="req">*</span></div>
     <div class="tipo-hint" id="tipoHint"></div>
-    <div class="tipo-row">
+    <div class="tipo-row" id="tipoRow">
       <button class="tipo-btn" id="btnE" onclick="setTipo('ENTRADA')">
         <span class="ico">🟢</span><span>Entrada</span><span class="tipo-when">Al llegar</span><span class="tipo-done" id="doneE"></span>
       </button>
@@ -277,6 +279,13 @@ const PERSONS_FALLBACK = [
 ];
 let PERSONS = PERSONS_FALLBACK;
 
+// Impulsos (21/10/2026): personas que trabajan 1 o 2 veces al mes en una
+// campaña. No estan en la nomina fija: el equipo las carga por campaña en el
+// sistema de control, y aca aparecen solo si esa campaña esta vigente hoy.
+// Una persona en dos campañas el mismo dia aparece dos veces (una por
+// campaña) y marca cada una por separado. Solo Entrada y Salida.
+let IMPULSOS = [];
+
 // ══════════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════════
@@ -311,6 +320,35 @@ async function init() {
   } catch (e) {
     // Sin conexion: seguimos con PERSONS_FALLBACK, ya cargado arriba
   }
+  cargarImpulsos();
+}
+
+async function cargarImpulsos() {
+  try {
+    const res = await fetch(WORKER + '/impulsos?key=' + KEY);
+    const data = await res.json();
+    if (!data.ok) return;
+    const hoy = fechaLocal();
+    const vigentes = {};
+    (data.campanias || []).forEach(c => {
+      if (c.activa && (!c.desde || c.desde <= hoy) && (!c.hasta || hoy <= c.hasta)) vigentes[c.id] = c;
+    });
+    IMPULSOS = (data.personas || []).filter(p => vigentes[p.campaniaId]).map(p => ({
+      id: 'IMP|' + p.campaniaId + '|' + p.ci, name: p.nombre, ci: p.ci,
+      role: 'Impulso · ' + vigentes[p.campaniaId].nombre,
+      impulso: true, campaniaId: p.campaniaId, campania: vigentes[p.campaniaId].nombre,
+    }));
+    const q = document.getElementById('searchInput').value.replace(/\D/g, '');
+    if (q.length >= MIN_DIGITOS_BUSQUEDA) filterList();
+  } catch (e) {
+    // Sin conexion: sin impulsos (los fijos siguen funcionando)
+  }
+}
+
+// La fecha del dia en la hora del telefono (no en UTC).
+function fechaLocal() {
+  const n = new Date();
+  return n.getFullYear() + '-' + pad(n.getMonth() + 1) + '-' + pad(n.getDate());
 }
 
 function tick() {
@@ -340,6 +378,9 @@ function setTipo(t) {
 // seleccionada: los deshabilita y muestra la hora ya registrada, para que
 // no puedan reenviar y pisar la foto/hora de la primera marcación del dia.
 function actualizarBotonesTipo() {
+  const esImp = !!(person && person.impulso);
+  document.getElementById('btnA').style.display = esImp ? 'none' : '';
+  document.getElementById('tipoRow').classList.toggle('dos', esImp);
   const map = { ENTRADA: ['btnE','doneE'], ALMUERZO: ['btnA','doneA'], SALIDA: ['btnS','doneS'] };
   Object.keys(map).forEach(t => {
     const [btnId, doneId] = map[t];
@@ -379,7 +420,8 @@ function actualizarBotonesTipo() {
 function sugerirTipo() {
   const hint = document.getElementById('tipoHint');
   if (!person) { hint.classList.remove('show'); return; }
-  const orden = [['ENTRADA','btnE','Entrada'], ['ALMUERZO','btnA','Almuerzo'], ['SALIDA','btnS','Salida']];
+  const orden = [['ENTRADA','btnE','Entrada'], ['ALMUERZO','btnA','Almuerzo'], ['SALIDA','btnS','Salida']]
+    .filter(([t]) => !(person.impulso && t === 'ALMUERZO'));
   const siguiente = orden.find(([t]) => !marcasHoy[t]);
   if (!siguiente) { hint.classList.remove('show'); return; }
   const [t, btnId, label] = siguiente;
@@ -394,6 +436,16 @@ function sugerirTipo() {
 // no hay conexion para esta consulta o queda informacion vieja en pantalla.
 async function fetchMarcasHoy(personId) {
   marcasHoy = { ENTRADA: null, ALMUERZO: null, SALIDA: null };
+  if (person && person.impulso) {
+    try {
+      const res = await fetch(`${WORKER}/impulsos/marcaciones?key=${KEY}&desde=${fechaLocal()}&hasta=${fechaLocal()}&campania=${encodeURIComponent(person.campaniaId)}`);
+      const data = await res.json();
+      const fila = data.ok && (data.data || []).find(r => r.ci === person.ci);
+      if (fila) { marcasHoy.ENTRADA = fila.horaEntrada || null; marcasHoy.SALIDA = fila.horaSalida || null; }
+    } catch (e) {}
+    actualizarBotonesTipo();
+    return;
+  }
   try {
     const res = await fetch(`${WORKER}?key=${KEY}&desde=${today}&hasta=${today}`);
     const data = await res.json();
@@ -421,7 +473,7 @@ function renderList(list) {
   dd.innerHTML = list.length
     ? list.map(p => `<div class="drop-item" onclick="selectPerson('${p.id}')">
         <div class="avatar">${initials(p.name)}</div>
-        <div><div class="drop-name">${p.name}</div><div class="drop-role">${p.role}</div></div>
+        <div><div class="drop-name">${p.name}${p.impulso ? '<span class="drop-imp">IMPULSO</span>' : ''}</div><div class="drop-role">${p.role}</div></div>
       </div>`).join('')
     : '<div style="padding:1rem;text-align:center;color:var(--gray);font-size:.85rem">Sin resultados</div>';
 }
@@ -444,7 +496,7 @@ function renderHintBusqueda() {
 function filterList() {
   const q = document.getElementById('searchInput').value.replace(/\D/g, '');
   if (q.length < MIN_DIGITOS_BUSQUEDA) { renderHintBusqueda(); document.getElementById('dropdown').classList.add('open'); return; }
-  renderList(PERSONS.filter(p => (p.ci || '').includes(q)));
+  renderList([...PERSONS, ...IMPULSOS].filter(p => (p.ci || '').includes(q)));
   document.getElementById('dropdown').classList.add('open');
 }
 
@@ -454,7 +506,7 @@ function openList() {
 }
 
 function selectPerson(id) {
-  person = PERSONS.find(p => p.id === id);
+  person = [...PERSONS, ...IMPULSOS].find(p => p.id === id);
   document.getElementById('dropdown').classList.remove('open');
   document.getElementById('searchInput').value = '';
   document.getElementById('searchWrap').style.display = 'none';
@@ -562,7 +614,7 @@ function clearPhoto() {
 // tocar); esto solo cubre el ultimo caso, que se deja pasar con aviso por
 // si la persona de verdad no marca el almuerzo formalmente.
 function mensajeFueraDeOrden(t) {
-  if (t === 'SALIDA' && !marcasHoy.ALMUERZO)
+  if (t === 'SALIDA' && !marcasHoy.ALMUERZO && !(person && person.impulso))
     return '¿Estás seguro de enviar la marcación SALIDA? Todavía no marcaste ALMUERZO hoy.';
   return null;
 }
@@ -606,7 +658,13 @@ async function enviarMarcacion() {
   btn.innerHTML = '<span class="spin"></span><span>Enviando...</span>';
 
   try {
-    const res = await fetch(WORKER, {
+    const res = person.impulso
+      ? await fetch(WORKER + '/impulsos/marcar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key: KEY, campaniaId: person.campaniaId, ci: person.ci, fecha: fechaLocal(), tipo, foto: photo, hora })
+        })
+      : await fetch(WORKER, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -637,6 +695,7 @@ async function enviarMarcacion() {
     const labelTipo = tipo==='ENTRADA' ? '🟢 Entrada' : tipo==='ALMUERZO' ? '🟡 Almuerzo' : '🔴 Salida';
     document.getElementById('sDetail').textContent =
       `${labelTipo} registrada el ${d}/${m}/${y} a las ${hora}.`+
+      (person.impulso ? `\nCampaña: ${person.campania}` : '')+
       '\n\nTu supervisora ya puede verla.';
 
   } catch(err) {
