@@ -55,13 +55,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);min-height:100dvh;d
 
 /* PERSON */
 .search-wrap{position:relative}
-/* Punto de venta de la activacion (25/11/2026) */
-.pdv-wrap{display:none}
-.pdv-wrap.show{display:block}
-.pdv-wrap input{width:100%;font-family:'DM Sans',sans-serif;font-size:.95rem;border:2px solid var(--gray-l);border-radius:10px;padding:.8rem 1rem;color:var(--navy);background:var(--cream)}
-.pdv-wrap input:focus{outline:none;border-color:var(--navy);background:var(--white)}
-.pdv-fijo{font-size:.9rem;font-weight:700;color:var(--navy);padding:.7rem 1rem;border-radius:10px;background:var(--cream);border:2px solid var(--gray-l)}
-.pdv-hint{font-size:.7rem;color:var(--gray);margin-top:.3rem}
 .search-wrap input{width:100%;font-family:'DM Sans',sans-serif;font-size:.95rem;border:2px solid var(--gray-l);border-radius:10px;padding:.8rem 1rem .8rem 2.6rem;color:var(--navy);background:var(--cream)}
 .search-wrap input:focus{outline:none;border-color:var(--navy);background:var(--white)}
 .search-ico{position:absolute;left:.85rem;top:50%;transform:translateY(-50%);color:var(--gray)}
@@ -213,15 +206,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);min-height:100dvh;d
     <div class="dropdown" id="dropdown"></div>
   </div>
 
-  <!-- Punto de venta (solo activaciones) -->
-  <div class="pdv-wrap" id="pdvWrap">
-    <div class="lbl">¿En qué punto de venta estás? <span class="req">*</span></div>
-    <input type="text" id="pdvInput" list="pdvLista" placeholder="Escribí o elegí el punto de venta..." autocomplete="off" />
-    <datalist id="pdvLista"></datalist>
-    <div class="pdv-fijo" id="pdvFijo" style="display:none"></div>
-    <div class="pdv-hint" id="pdvHint">Si no aparece en la lista, escribilo completo.</div>
-  </div>
-
   <!-- Foto -->
   <div>
     <div class="lbl">Foto <span class="req">*</span></div>
@@ -300,13 +284,7 @@ let PERSONS = PERSONS_FALLBACK;
 // sistema de control, y aca aparecen solo si esa campaña esta vigente hoy.
 // Una persona en dos campañas el mismo dia aparece dos veces (una por
 // campaña) y marca cada una por separado. Solo Entrada y Salida.
-// Activaciones (25/11/2026): ya no hay campañas sino "Activaciones de <Mes>"
-// (una por mes, se crea sola). Puede estar tambien alguien de la nomina fija
-// (aparece dos veces: la fija y la de activacion). Al marcar la entrada se
-// elige el punto de venta; la salida queda en el mismo punto.
 let IMPULSOS = [];
-let PUNTOS = [];
-let pdvHoy = null;   // punto de venta de la entrada ya marcada hoy
 
 // ══════════════════════════════════════════════
 // STATE
@@ -357,11 +335,9 @@ async function cargarImpulsos() {
     });
     IMPULSOS = (data.personas || []).filter(p => vigentes[p.campaniaId]).map(p => ({
       id: 'IMP|' + p.campaniaId + '|' + p.ci, name: p.nombre, ci: p.ci,
-      role: (p.campaniaId.startsWith('ACT-') ? 'Activación' : 'Impulso · ' + vigentes[p.campaniaId].nombre),
+      role: 'Impulso · ' + vigentes[p.campaniaId].nombre,
       impulso: true, campaniaId: p.campaniaId, campania: vigentes[p.campaniaId].nombre,
     }));
-    PUNTOS = data.puntos || [];
-    document.getElementById('pdvLista').innerHTML = PUNTOS.map(x => `<option value="${x.replace(/"/g, '&quot;')}">`).join('');
     const q = document.getElementById('searchInput').value.replace(/\D/g, '');
     if (q.length >= MIN_DIGITOS_BUSQUEDA) filterList();
   } catch (e) {
@@ -460,16 +436,14 @@ function sugerirTipo() {
 // no hay conexion para esta consulta o queda informacion vieja en pantalla.
 async function fetchMarcasHoy(personId) {
   marcasHoy = { ENTRADA: null, ALMUERZO: null, SALIDA: null };
-  pdvHoy = null;
   if (person && person.impulso) {
     try {
       const res = await fetch(`${WORKER}/impulsos/marcaciones?key=${KEY}&desde=${fechaLocal()}&hasta=${fechaLocal()}&campania=${encodeURIComponent(person.campaniaId)}`);
       const data = await res.json();
       const fila = data.ok && (data.data || []).find(r => r.ci === person.ci);
-      if (fila) { marcasHoy.ENTRADA = fila.horaEntrada || null; marcasHoy.SALIDA = fila.horaSalida || null; pdvHoy = fila.pdv || null; }
+      if (fila) { marcasHoy.ENTRADA = fila.horaEntrada || null; marcasHoy.SALIDA = fila.horaSalida || null; }
     } catch (e) {}
     actualizarBotonesTipo();
-    mostrarPdv();
     return;
   }
   try {
@@ -499,7 +473,7 @@ function renderList(list) {
   dd.innerHTML = list.length
     ? list.map(p => `<div class="drop-item" onclick="selectPerson('${p.id}')">
         <div class="avatar">${initials(p.name)}</div>
-        <div><div class="drop-name">${p.name}${p.impulso ? `<span class="drop-imp">${p.campaniaId.startsWith('ACT-') ? 'ACTIVACIÓN' : 'IMPULSO'}</span>` : ''}</div><div class="drop-role">${p.role}</div></div>
+        <div><div class="drop-name">${p.name}${p.impulso ? '<span class="drop-imp">IMPULSO</span>' : ''}</div><div class="drop-role">${p.role}</div></div>
       </div>`).join('')
     : '<div style="padding:1rem;text-align:center;color:var(--gray);font-size:.85rem">Sin resultados</div>';
 }
@@ -543,27 +517,8 @@ function selectPerson(id) {
   fetchMarcasHoy(person.id);
 }
 
-// Punto de venta: lo elige quien hace una activacion al marcar la entrada;
-// con la entrada ya marcada se muestra fijo (la salida va al mismo punto).
-function esActivacion() { return !!(person && person.impulso && person.campaniaId.startsWith('ACT-')); }
-function mostrarPdv() {
-  const act = esActivacion();
-  document.getElementById('pdvWrap').classList.toggle('show', act);
-  if (!act) return;
-  const fijo = !!(marcasHoy.ENTRADA && pdvHoy);
-  document.getElementById('pdvInput').style.display = fijo ? 'none' : '';
-  document.getElementById('pdvHint').style.display = fijo ? 'none' : '';
-  document.getElementById('pdvFijo').style.display = fijo ? 'block' : 'none';
-  document.getElementById('pdvFijo').textContent = fijo ? '📍 ' + pdvHoy : '';
-}
-const pdvElegido = () => (document.getElementById('pdvInput').value || '').replace(/\s+/g, ' ').trim().toUpperCase();
-const pdvDeLaMarca = () => tipo === 'ENTRADA' ? pdvElegido() : (pdvHoy || '');
-
 function clearPerson() {
   person = null;
-  pdvHoy = null;
-  document.getElementById('pdvInput').value = '';
-  mostrarPdv();
   marcasHoy = { ENTRADA: null, ALMUERZO: null, SALIDA: null };
   actualizarBotonesTipo();
   document.getElementById('selPerson').classList.remove('show');
@@ -609,8 +564,7 @@ function watermark(ctx, w, h) {
   const now = new Date();
   const time = pad(now.getHours())+':'+pad(now.getMinutes());
   const date = `${pad(now.getDate())}/${pad(now.getMonth()+1)}/${now.getFullYear()}`;
-  const pdvFoto = esActivacion() ? pdvDeLaMarca() : '';
-  const pname = (person ? person.name.split(',')[0].toUpperCase() : '') + (pdvFoto ? ' · ' + pdvFoto : '');
+  const pname = person ? person.name.split(',')[0].toUpperCase() : '';
   const fs = Math.round(h*0.037);
   ctx.textAlign = 'left';
   ctx.font = `700 ${fs}px Arial`;
@@ -675,7 +629,6 @@ function submit() {
   // para esto, este chequeo es la segunda barrera por si el estado del
   // boton quedo desactualizado (ej. reconexion a mitad de la carga).
   if ((tipo === 'ALMUERZO' || tipo === 'SALIDA') && !marcasHoy.ENTRADA) return showErr(`No podés marcar ${tipo} sin haber marcado ENTRADA hoy.`);
-  if (esActivacion() && tipo === 'ENTRADA' && !pdvElegido()) return showErr('Elegí el punto de venta donde estás');
   showErr('');
 
   const msg = mensajeFueraDeOrden(tipo);
@@ -709,7 +662,7 @@ async function enviarMarcacion() {
       ? await fetch(WORKER + '/impulsos/marcar', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ key: KEY, campaniaId: person.campaniaId, ci: person.ci, fecha: fechaLocal(), tipo, foto: photo, hora, pdv: pdvDeLaMarca() })
+          body: JSON.stringify({ key: KEY, campaniaId: person.campaniaId, ci: person.ci, fecha: fechaLocal(), tipo, foto: photo, hora })
         })
       : await fetch(WORKER, {
       method: 'POST',
@@ -742,7 +695,7 @@ async function enviarMarcacion() {
     const labelTipo = tipo==='ENTRADA' ? '🟢 Entrada' : tipo==='ALMUERZO' ? '🟡 Almuerzo' : '🔴 Salida';
     document.getElementById('sDetail').textContent =
       `${labelTipo} registrada el ${d}/${m}/${y} a las ${hora}.`+
-      (person.impulso ? (esActivacion() ? `\nActivación en: ${pdvDeLaMarca()}` : `\nCampaña: ${person.campania}`) : '')+
+      (person.impulso ? `\nCampaña: ${person.campania}` : '')+
       '\n\nTu supervisora ya puede verla.';
 
   } catch(err) {
@@ -759,9 +712,7 @@ function showErr(msg) {
 }
 
 function reset() {
-  person = null; photo = null; tipo = null; pdvHoy = null;
-  document.getElementById('pdvInput').value = '';
-  mostrarPdv();
+  person = null; photo = null; tipo = null;
   marcasHoy = { ENTRADA: null, ALMUERZO: null, SALIDA: null };
   document.getElementById('confirmOverlay').classList.remove('show');
   document.getElementById('successScreen').classList.remove('show');
